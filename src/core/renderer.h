@@ -21,10 +21,11 @@ typedef struct {
     u32 canvasTexture;
     Buffers canvasMeshBuffers;
 
-    u16 canvasWidth;
-    u16 canvasHeight;
+    i32 canvasWidth;
+    i32 canvasHeight;
 
     u32 colorTable[65536];
+    u32* updateData;
 
     void* window;
 

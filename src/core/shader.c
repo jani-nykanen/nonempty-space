@@ -77,7 +77,7 @@ static void get_uniform_locations(Shader* shader) {
 
     shader->unifPos = glGetUniformLocation(shader->program, "pos");
     shader->unifSize = glGetUniformLocation(shader->program, "size");
-    shader->unifTransform = glGetUniformLocation(shader->program, "transform");
+    // shader->unifTransform = glGetUniformLocation(shader->program, "transform");
     shader->unifSampler = glGetUniformLocation(shader->program, "texSampler");
 }
 
@@ -88,7 +88,7 @@ static void set_default_uniforms(Shader* shader) {
     
     glUniform3f(shader->unifPos, 0.0f, 0.0f, 0.0f);
     glUniform3f(shader->unifSize, 1.0f, 1.0f, 1.0f);
-    glUniformMatrix4fv(shader->unifTransform, 1, false, (const f32*)id.m);
+    // glUniformMatrix4fv(shader->unifTransform, 1, false, (const f32*)id.m);
     glUniform1i(shader->unifSampler, 0);
 }
 
@@ -157,4 +157,11 @@ void dispose_shader(Shader* shader) {
         glDeleteShader(shader->program);
 
     m_free(shader);
+}
+
+
+void shader_pass_vertex_shader_properties(Shader* s, f32 x, f32 y, f32 w, f32 h) {
+
+    glUniform2f(s->unifPos, x, y);
+    glUniform2f(s->unifSize, w, h);
 }
