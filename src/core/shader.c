@@ -131,16 +131,19 @@ static i32 build_shader(Shader* s, const str vertexSrc, const str fragmentSrc, E
 
 Shader* new_shader(const str vertexSrc, const str fragmentSrc, Error* err) {
 
-    Shader* s =(Shader*) calloc(1, sizeof(Shader));
+    Shader* s = (Shader*) calloc(1, sizeof(Shader));
     if (s == NULL) {
 
         *err = memory_error();
         return NULL;
     }
 
+    if (build_shader(s, vertexSrc, fragmentSrc, err) != 0) {
 
-
-
+        dispose_shader(s);
+        return NULL;
+    }
+    
     return s;
 }
 

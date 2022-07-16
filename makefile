@@ -1,4 +1,4 @@
-LD_FLAGS :=  lib/libcommon.a lib/libcore.a lib/libglad.a -lGL -lSDL2 -lm -ldl
+LD_FLAGS :=  lib/libcommon.a lib/libcore.a lib/libglad.a -lGL -lglfw3 -lm -ldl
 CC_FLAGS :=  -Wall -O1
 
 SRC_GLAD := $(wildcard src/glad/*.c)
