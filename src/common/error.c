@@ -36,7 +36,7 @@ Error create_error_str_param_1(const str message, const str param1) {
     e.isEmpty = false;
 
     snprintf(e.message, ERROR_MAX_LENGTH, 
-        "Error in file %s, line %d: %s", 
+        "Error in file %s, line %d: %s%s", 
         __FILE__, __LINE__, 
         message, param1);
 
@@ -51,7 +51,7 @@ Error create_error_str_param_2(const str message, const str param1, const str pa
     e.isEmpty = false;
 
     snprintf(e.message, ERROR_MAX_LENGTH, 
-        "Error in file %s, line %d: %s", 
+        "Error in file %s, line %d: %s%s%s", 
         __FILE__, __LINE__, 
         message, param1, param2);
 

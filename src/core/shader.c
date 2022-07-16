@@ -93,17 +93,65 @@ static void set_default_uniforms(Shader* shader) {
 }
 
 
+static i32 build_shader(Shader* s, const str vertexSrc, const str fragmentSrc, Error* err) {
+
+    u32 vertex, frag;
+
+    vertex = compile_shader(GL_VERTEX_SHADER, vertexSrc, err);
+    if (vertex == 0) {
+
+        return 1;
+    }
+
+    frag = compile_shader(GL_FRAGMENT_SHADER, fragmentSrc, err);
+    if (frag == 0) {
+
+        return 1;
+    }
+
+    s->program = link_program(vertex, frag, err);
+    if (s->program == 0) {
+
+        return 1;
+    }
+
+    glDetachShader(s->program, vertex);
+	glDetachShader(s->program, frag);
+	
+	glDeleteShader(vertex);
+	glDeleteShader(frag);
+
+    glUseProgram(s->program);
+    get_uniform_locations(s);
+    set_default_uniforms(s);
+
+    return 0;
+}
+
+
 Shader* new_shader(const str vertexSrc, const str fragmentSrc, Error* err) {
 
-    return NULL;
+    Shader* s =(Shader*) calloc(1, sizeof(Shader));
+    if (s == NULL) {
+
+        *err = memory_error();
+        return NULL;
+    }
+
+
+
+
+    return s;
 }
 
 
 void dispose_shader(Shader* shader) {
 
     if (shader == NULL)
-        return;
+        return; 
 
-    glDeleteShader(shader->program);
+    if (shader->program != 0)
+        glDeleteShader(shader->program);
+
     m_free(shader);
 }
