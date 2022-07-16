@@ -19,17 +19,19 @@ typedef struct {
 
     Shader* shader;
     u32 canvasTexture;
-    Buffers buffers;
+    Buffers canvasMeshBuffers;
 
     u16 canvasWidth;
     u16 canvasHeight;
 
     u32 colorTable[65536];
 
+    void* window;
+
 } Renderer;
 
 
-Renderer* new_renderer(u16 canvasWidth, u16 canvasHeight, Error* err);
+Renderer* new_renderer(u16 canvasWidth, u16 canvasHeight, void* window, Error* err);
 void dispose_renderer(Renderer* r);
 
 void renderer_resize_event(Renderer* r, i32 width, i32 height);
