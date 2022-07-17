@@ -5,6 +5,9 @@
 #include <stdbool.h>
 
 
+#define EMPTY_STRUCT(name) typedef struct name name
+
+
 typedef unsigned char u8;
 typedef signed char i8;
 

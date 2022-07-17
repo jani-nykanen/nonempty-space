@@ -75,31 +75,31 @@ static void draw_buffers(Buffers b) {
 
 static void compute_color_table(u32** table) {
 
-    u16 i;
+    i32 i;
+    u8 c;
     u16 r, g, b;
 
-    // A sufficient approximation of rgb555 palette.
-    // Floating points could provide better accuracy,
-    // and I might end up using them later
-    for (i = 0; i < 32768; ++ i) {
+    for (i = 0; i < 256; ++ i) {
 
-        r = i >> 10;
-        g = i << 6;
-        g = g >> 11;
-        b = i << 11;
-        b = i >> 11;
+        c = (u8) i;
 
-        r *= 8;
-        if (r >= 248)
+        r = c >> 5;
+
+        g = c << 3;
+        g = g >> 5;
+
+        b = c << 6;
+        b = b >> 6;
+
+        r *= 36;
+        if (r >= 252)
             r = 255;
 
-        g *= 8;
-        if (g >= 248)
+        g *= 36;
+        if (g >= 252)
             g = 255;
 
-        b *= 8;
-        if (b >= 248)
-            b = 255;
+        b *= 85;
 
         (*table)[i] = (r << 24) | (g << 16) | (b << 8) | 255;
     }
@@ -176,6 +176,8 @@ void renderer_resize_event(Renderer* r, i32 width, i32 height) {
 
     f32 m = 1.0f;
 
+    glViewport(0, 0, width, height);
+
     if (fw / fh >= fcw / fch) {
 
         m = fh / fch;
@@ -206,7 +208,7 @@ void renderer_resize_event(Renderer* r, i32 width, i32 height) {
 }
 
 
-void renderer_update_canvas_texture(Renderer* r, u16* pixels) {
+void renderer_update_canvas_texture(Renderer* r, u8* pixels) {
     
     i32 i;
 

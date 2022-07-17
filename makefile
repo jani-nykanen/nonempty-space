@@ -7,6 +7,9 @@ OBJ_GLAD := $(patsubst %.c, %.o, $(SRC_GLAD))
 SRC_COMMON := $(wildcard src/common/*.c)
 OBJ_COMMON := $(patsubst %.c, %.o, $(SRC_COMMON))
 
+SRC_CORE := $(wildcard src/core/*.c)
+OBJ_CORE := $(patsubst %.c, %.o, $(SRC_CORE))
+
 
 .PHONY: shader
 shader:
@@ -24,3 +27,8 @@ common: $(OBJ_COMMON)
 	mkdir -p lib
 	ar -crs lib/lib$@.a $^
 	(cd src/common; rm *.o)
+
+core: $(OBJ_CORE)
+	mkdir -p lib
+	ar -crs lib/lib$@.a $^
+	(cd src/core; rm *.o)
