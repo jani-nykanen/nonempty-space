@@ -91,7 +91,7 @@ static void set_default_uniforms(Shader* shader) {
 }
 
 
-static i32 build_shader(Shader* s, const str vertexSrc, const str fragmentSrc, Error* err) {
+static i32 build_shader(Shader* s, str vertexSrc, str fragmentSrc, Error* err) {
 
     u32 vertex, frag;
 
@@ -127,7 +127,7 @@ static i32 build_shader(Shader* s, const str vertexSrc, const str fragmentSrc, E
 }
 
 
-Shader* new_shader(const str vertexSrc, const str fragmentSrc, Error* err) {
+Shader* new_shader(str vertexSrc, str fragmentSrc, Error* err) {
 
     Shader* s = (Shader*) calloc(1, sizeof(Shader));
     if (s == NULL) {

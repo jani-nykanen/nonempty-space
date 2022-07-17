@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "shadersrc.h"
+
 
 static void init_opengl() {
 
@@ -121,6 +123,13 @@ Renderer* new_renderer(u16 canvasWidth, u16 canvasHeight, void* window, Error* e
     r->canvasHeight = (i32) canvasHeight;
     r->window = window;
 
+    r->shader = new_shader((str) VERTEX_SRC, (str) FRAGMENT_SRC, err);
+    if (r->shader == NULL) {
+
+        dispose_renderer(r);
+        return NULL;
+    }
+
     r->canvasTexture = create_opengl_texture(canvasWidth, canvasHeight);
     if (r->canvasTexture == 0) {
 
@@ -155,6 +164,8 @@ void dispose_renderer(Renderer* r) {
 
         glDeleteTextures(1, &r->canvasTexture);
     }
+    
+    dispose_shader(r->shader);
     
     m_free(r->updateData);
     m_free(r);

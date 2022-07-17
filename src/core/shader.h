@@ -19,7 +19,7 @@ typedef struct {
 } Shader;
 
 
-Shader* new_shader(const str vertexSrc, const str fragmentSrc, Error* err);
+Shader* new_shader(str vertexSrc, str fragmentSrc, Error* err);
 void dispose_shader(Shader* shader);
 
 void shader_pass_vertex_shader_properties(Shader* s, f32 x, f32 y, f32 w, f32 h);
