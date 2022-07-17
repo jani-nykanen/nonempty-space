@@ -22,5 +22,7 @@ void window_register_callbacks(Window* win,
 void window_update_canvas(Window* win, u8* data);
 void window_activate(Window* win);
 
+void window_get_canvas_size(Window* win, i32* width, i32* height);
+
 
 #endif // NONEMPTY_SPACE_CORE_WINDOW_H

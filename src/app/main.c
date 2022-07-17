@@ -15,8 +15,6 @@ typedef struct {
 
 
 static void dispose_program(MainProgram* prog) {
-    
-    printf("Oh noes!\n");
 
     if (prog->app != NULL)
         dispose_application(prog->app);
@@ -48,7 +46,7 @@ i32 main(i32 argc, str* argv) {
         return 1;
     }
 
-    prog.app = new_application(&err);
+    prog.app = new_application(prog.win, &err);
     if (prog.app == NULL) {
 
         fprintf(stderr, "An error occurred: %s\n", err.message);

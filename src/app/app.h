@@ -4,15 +4,17 @@
 
 #include "core/window.h"
 
+#include "canvas.h"
+
 
 typedef struct {
 
-    // ...
+    Canvas* canvas;
 
 } Application;
 
 
-Application* new_application(Error* err);
+Application* new_application(Window* win, Error* err);
 void dispose_application(Application* app);
 
 void app_register_callbacks(Application* app, Window* win);

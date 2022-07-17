@@ -84,8 +84,8 @@ static void get_uniform_locations(Shader* shader) {
 static void set_default_uniforms(Shader* shader) {
 
 
-    glUniform3f(shader->unifPos, 0.0f, 0.0f, 0.0f);
-    glUniform3f(shader->unifSize, 1.0f, 1.0f, 1.0f);
+    glUniform2f(shader->unifPos, 0.0f, 0.0f);
+    glUniform2f(shader->unifSize, 1.0f, 1.0f);
     // glUniformMatrix4fv(shader->unifTransform, 1, false, (const f32*)id.m);
     glUniform1i(shader->unifSampler, 0);
 }

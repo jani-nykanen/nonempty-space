@@ -26,6 +26,14 @@ typedef struct {
 
 } _Window;
 
+static _Window* winRef = NULL;
+
+
+static void glfw_window_size_callback(GLFWwindow* window, i32 width, i32 height) {
+
+    renderer_resize_event(winRef->renderer, width, height);
+}
+
 
 static i32 create_glfw_window(_Window* win, i32 width, i32 height, const str caption, Error* err) {
 
@@ -45,6 +53,7 @@ static i32 create_glfw_window(_Window* win, i32 width, i32 height, const str cap
         *err = create_error_no_param("Failed to initialize Glad OpenGL loader!");
         return 1;
     }
+
     return 0;
 }
 
@@ -109,6 +118,9 @@ Window* new_window(u16 canvasWidth, u16 canvasHeight, const str caption, Error* 
     }
     renderer_resize_event(win->renderer, winWidth, winHeight);
 
+    winRef = win;
+    glfwSetWindowSizeCallback(win->window, glfw_window_size_callback);
+
     win->updateCb = NULL;
     win->redrawCb = NULL;
     win->param = NULL;
@@ -163,4 +175,13 @@ void window_activate(Window* _win) {
 
         main_loop(win);
     }
+}
+
+
+void window_get_canvas_size(Window* _win, i32* width, i32* height) {
+
+    _Window* win = (_Window*) _win;
+
+    *width = win->renderer->canvasWidth;
+    *height = win->renderer->canvasHeight;
 }

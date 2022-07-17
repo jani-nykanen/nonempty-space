@@ -7,7 +7,7 @@ static const char VERTEX_SRC[] =
 "// uniform mat4 transform;\n"
 "    \n"
 "uniform vec2 pos;\n"
-"uniform vec2 scale;\n"
+"uniform vec2 size;\n"
 "    \n"
 "varying vec2 uv;\n"
 "\n"
@@ -15,7 +15,7 @@ static const char VERTEX_SRC[] =
 "void main() {\n"
 "    \n"
 "    // gl_Position = transform * vec4(vertexPos * scale + pos, 1, 1);\n"
-"    gl_Position = vec4(vertexPos * scale + pos, 1, 1);\n"
+"    gl_Position = vec4(vertexPos * size + pos, 1, 1);\n"
 "    uv = vertexUV;\n"
 "}\n";
 

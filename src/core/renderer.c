@@ -34,7 +34,7 @@ static u32 create_opengl_texture(u16 width, u16 height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA8, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     return tex;
 }
@@ -75,11 +75,11 @@ static void draw_buffers(Buffers b) {
 }
 
 
-static void compute_color_table(u32** table) {
+static void compute_color_table(u32 table[256]) {
 
     i32 i;
     u8 c;
-    u16 r, g, b;
+    u8 r, g, b;
 
     for (i = 0; i < 256; ++ i) {
 
@@ -103,7 +103,7 @@ static void compute_color_table(u32** table) {
 
         b *= 85;
 
-        (*table)[i] = (r << 24) | (g << 16) | (b << 8) | 255;
+        table[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
 }
 
@@ -147,7 +147,7 @@ Renderer* new_renderer(u16 canvasWidth, u16 canvasHeight, void* window, Error* e
 
         return NULL;
     }
-    compute_color_table(&r->updateData);
+    compute_color_table(r->colorTable);
 
     r->canvasMeshBuffers = create_rectangle_mesh_buffers();
 
@@ -211,8 +211,8 @@ void renderer_resize_event(Renderer* r, i32 width, i32 height) {
     // Scale to [-1.0, 1.0]^2 range
     output[0] = ((output[0] / fw) * 2.0) - 1.0f;
     output[1] = ((output[1] / fh )* 2.0) - 1.0f;
-    output[2] = ((output[2] / fw) * 2.0) - 1.0f;
-    output[3] = ((output[3] / fh )* 2.0) - 1.0f;
+    output[2] = ((output[2] / fw) * 2.0);
+    output[3] = ((output[3] / fh )* 2.0);
 
     shader_pass_vertex_shader_properties(r->shader, 
         output[0], output[1], output[2], output[3]);
@@ -228,6 +228,7 @@ void renderer_update_canvas_texture(Renderer* r, u8* pixels) {
         r->updateData[i] = r->colorTable[ pixels[i] ];
     }
 
+    // glBindTexture(GL_TEXTURE_2D, r->canvasTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 
         (i32) r->canvasWidth, (i32) r->canvasHeight, 
         GL_RGBA, GL_UNSIGNED_BYTE, (void*) r->updateData);
