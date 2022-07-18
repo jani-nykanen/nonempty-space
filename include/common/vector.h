@@ -27,5 +27,6 @@ Vector4 vec4_normalize(Vector4 v, bool forceUnit);
 f32 vec4_distance(Vector4 a, Vector4 b);
 Vector4 vec4_direction(Vector4 a, Vector4 b);
 
+Vector4 vec4_scalar_multiply(Vector4 v, f32 scalar);
 
 #endif // NONEMPTY_SPACE_COMMON_VECTOR_H

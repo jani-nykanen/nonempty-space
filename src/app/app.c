@@ -1,4 +1,5 @@
 #include "app.h"
+#include "noisegen.h"
 
 #include "common/memory.h"
 
@@ -17,7 +18,9 @@ static void redraw_callback(void* pApp, Window* win) {
     Application* app = (Application*) pApp;
     Canvas* canvas = app->canvas;
 
-    canvas_clear(canvas, rand () % 255);
+    canvas_clear(canvas, 182);
+
+    canvas_draw_bitmap_fast(canvas, app->cubeTextureNoise, 0, 0);
 
     canvas_update_window_content(canvas, win);
 }
@@ -42,6 +45,16 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
+    app->cubeTextureNoise = generate_gaussian_noise_bitmap(
+        128, 128, -1.33f, 1.33f, 1, 
+        vec3(1.0f, 1.0f, 1.0f), 12345, err);
+    if (app->cubeTextureNoise == NULL) {
+
+        *err = memory_error();
+        dispose_application(app);
+        return NULL;
+    }
+
     return app;
 }
 
@@ -52,6 +65,7 @@ void dispose_application(Application* app) {
         return;
 
     dispose_canvas(app->canvas);
+    dispose_bitmap(app->cubeTextureNoise);
     m_free(app);
 }
 

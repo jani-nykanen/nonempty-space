@@ -10,6 +10,7 @@
 typedef struct {
 
     Canvas* canvas;
+    Bitmap* cubeTextureNoise;
 
 } Application;
 

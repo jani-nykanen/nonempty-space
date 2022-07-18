@@ -17,7 +17,14 @@ Vector4 vec3(f32 x, f32 y, f32 z)  {
 
 Vector4 vec4(f32 x, f32 y, f32 z, f32 w)  {
 
-    return vec4(x, y, z, w);    
+    Vector4 v;
+
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    v.w = w;
+
+    return v;  
 }
 
 
@@ -79,4 +86,10 @@ Vector4 vec4_direction(Vector4 a, Vector4 b) {
     Vector4 d = vec4(b.x - a.x, b.y - a.y, b.z - a.z, b.w - a.w);
 
     return vec4_normalize(d, false);
+}
+
+
+Vector4 vec4_scalar_multiply(Vector4 v, f32 scalar) {
+
+    return vec4(v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar);
 }
