@@ -47,7 +47,7 @@ Application* new_application(Window* win, Error* err) {
 
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(
         128, 128, -1.33f, 1.33f, 1, 
-        vec3(1.0f, 1.0f, 1.0f), 12345, err);
+        vec3(1.0f, 0.67f, 0.33f), 12345, err);
     if (app->cubeTextureNoise == NULL) {
 
         *err = memory_error();

@@ -103,7 +103,7 @@ static void compute_color_table(u32 table[256]) {
 
         b *= 85;
 
-        table[i] = (255 << 24) | (b << 16) | (g << 8) | r;
+        table[i] = (255 << 24) | ( ((i32) b) << 16) | ( ((i32) g) << 8) | ((i32) r);
     }
 }
 
