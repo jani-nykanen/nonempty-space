@@ -40,6 +40,11 @@ static void redraw_callback(void* pApp, Window* win) {
 
     canvas_draw_bitmap_fast(canvas, app->cubeTextureNoise, 0, 0);
 
+    tri_draw_triangle(&app->tri, app->cubeTextureNoise, 255, 
+        32, 32, 
+        192, 96, 
+        96, 160);
+
     canvas_update_window_content(canvas, win);
 }
 
@@ -72,6 +77,8 @@ Application* new_application(Window* win, Error* err) {
         dispose_application(app);
         return NULL;
     }
+
+    app->tri = create_triangle_rasterizer(app->canvas);
 
     return app;
 }

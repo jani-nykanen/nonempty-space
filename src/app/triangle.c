@@ -1,5 +1,9 @@
 #include "triangle.h"
 
+#include <stdio.h>
+#include <math.h>
+
+
 typedef i32 PointTriplet[6];
 
 
@@ -81,10 +85,52 @@ static void order_points(i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3, PointTr
 
 
 static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
-    i32 minx, i32 maxx, i32 starty, i32 endy, f32 k1, f32 k2,
+    i32 startx, i32 endx, i32 starty, i32 endy, f32 k1, f32 k2,
     u8 color) {
 
+    i32 dirx, diry;
+    i32 x, y;
+
+    f32 fstartx = (f32) startx;
+    f32 fendx = (f32) endx;
+
     if (starty == endy) return;
+
+    dirx = startx < endx ? 1 : -1;
+    diry = starty < endy ? 1 : -1; 
+
+    for (y = starty; y != endy + diry; y += diry) {
+
+        if ((diry > 0 && y >= canvas->height) ||
+            (diry < 0 && y < 0)) {
+
+            break;
+        }
+        if (y < 0 || y >= canvas->height)
+            continue;
+
+        for (x = (i32) fstartx; x != ((i32) fendx) + dirx; x += dirx) {
+
+            if ((dirx > 0 && x >= canvas->width) ||
+                (dirx < 0 && x < 0)) {
+
+                break;
+            }
+            if (x < 0) {
+
+                x = 0;
+            }
+            else if(x >= canvas->width) {
+
+                x = canvas->width - 1;
+            }
+
+            canvas->pixels[y * canvas->width + x] = color;
+        }
+
+        fendx += k1;
+        fstartx -= k2;
+    }
 } 
 
 
@@ -111,22 +157,33 @@ void tri_draw_triangle(TriangleRasterizer* tri,
 
     PointTriplet p;
     i32 midx;
-    f32 k1, k2;
+    f32 k1 = 0.0f;
+    f32 k2 = 0.0f;
 
-    order_points(x1, y2, x2, y2, x3, y3, p);
+    // To avoid a warning
+    p[0] = 0; p[1] = 0;
+    p[2] = 0; p[3] = 0;
+    p[4] = 0; p[5] = 0;
+
+    order_points(x1, y1, x2, y2, x3, y3, p);
 
     // No triangle to be drawn
     if (p[1] == p[3] && p[1] == p[5])
         return;
 
-    // Special case: no top triangle
-    if (p[1] == p[3]) {
 
-        // k1 = ?
-        // k2 = ? 
+    // Typecast hell
+    midx = p[4] - (i32) floorf(((f32) (p[5] - p[3])) * ((f32) (p[4] - p[0])) / ((f32) (p[5] - p[1])));
 
-        draw_triangle_half(tri->canvas, texture,
-            min_i32(p[0], p[2]), max_i32(p[0], p[2]),
-            p[1], p[5], k1, k2, color);
+    if (p[2] != p[0]) {
+
+        k1 = ((f32) (p[3] - p[1])) / ((f32) (p[2] - (f32) p[0]));
     }
+    if (p[4] != p[0]) {
+
+        k2 = ((f32) (p[5] - p[1])) / ((f32) (p[4] - p[0]));
+    }
+
+    // draw_triangle_half(tri->canvas, texture, p[2], midx, p[3], p[1], -k1, -k2, color);
+    draw_triangle_half(tri->canvas, texture, p[2], midx, p[3], p[5], k1, k2, color);
 }

@@ -5,12 +5,14 @@
 #include "core/window.h"
 
 #include "canvas.h"
+#include "triangle.h"
 
 
 typedef struct {
 
     Canvas* canvas;
     Bitmap* cubeTextureNoise;
+    TriangleRasterizer tri;
 
 } Application;
 
