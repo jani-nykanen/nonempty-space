@@ -69,5 +69,8 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
     i32 x, i32 y, 
     i32 xoff, i32 yoff, Align align); 
 
+void canvas_draw_line(Canvas* canvas, 
+    i32 x1, i32 y1, i32 x2, i32 y2, u8 color);
+    
 
 #endif // NONEMPTY_SPACE_APP_CANVAS_H

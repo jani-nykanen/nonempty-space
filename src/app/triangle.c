@@ -7,7 +7,9 @@
 typedef i32 PointTriplet[6];
 
 
-static void order_points(i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3, PointTriplet out) {
+static void order_points(
+    i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3,
+    i32* dx1, i32* dy1, i32* dx2, i32* dy2, i32* dx3, i32* dy3) {
 
     // We could use qsort, but since we have only three points
     // to order, we can do this manually. No need for for loop,
@@ -18,66 +20,66 @@ static void order_points(i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3, PointTr
 
     if (y1 <= y2 && y1 <= y3) {
 
-        out[0] = x1;
-        out[1] = y1;
+        *dx1 = x1;
+        *dy1 = y1;
 
         if (y2 <= y3) {
 
-            out[2] = x2;
-            out[3] = y2;
-            out[4] = x3;
-            out[5] = y3;
+            *dx2 = x2;
+            *dy2 = y2;
+            *dx3 = x3;
+            *dy3 = y3;
         }
         else {
 
-            out[2] = x3;
-            out[3] = y3;
-            out[4] = x2;
-            out[5] = y2;
+            *dx2 = x3;
+            *dy2 = y3;
+            *dx3 = x2;
+            *dy3 = y2;
         }
         return;
     }
 
     if (y2 <= y1 && y2 <= y3) {
 
-        out[0] = x2;
-        out[1] = y2;
+        *dx1 = x2;
+        *dy1 = y2;
 
         if (y1 <= y3) {
 
-            out[2] = x1;
-            out[3] = y1;
-            out[4] = x3;
-            out[5] = y3;
+            *dx2 = x1;
+            *dy2 = y1;
+            *dx3 = x3;
+            *dy3 = y3;
         }
         else {
 
-            out[2] = x3;
-            out[3] = y3;
-            out[4] = x1;
-            out[5] = y1;
+            *dx2 = x3;
+            *dy2 = y3;
+            *dx3 = x1;
+            *dy3 = y1;
         }
         return;
     }
 
     if (y3 <= y1 && y3 <= y2) {
 
-        out[0] = x3;
-        out[1] = y3;
+        *dx1 = x3;
+        *dy1 = y3;
 
         if (y2 <= y1) {
 
-            out[2] = x2;
-            out[3] = y2;
-            out[4] = x1;
-            out[5] = y1;
+            *dx2 = x2;
+            *dy2 = y2;
+            *dx3 = x1;
+            *dy3 = y1;
         }
         else {
 
-            out[2] = x1;
-            out[3] = y1;
-            out[4] = x2;
-            out[5] = y2;
+            *dx2 = x1;
+            *dy2 = y1;
+            *dx3 = x2;
+            *dy3 = y2;
         }
         return;
     }
@@ -99,7 +101,10 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
     dirx = startx < endx ? 1 : -1;
     diry = starty < endy ? 1 : -1; 
 
-    for (y = starty; y != endy + diry; y += diry) {
+    for (y = starty; y != endy + diry; 
+        y += diry, 
+        fendx += k1 * diry,
+        fstartx += k2 * diry) {
 
         if ((diry > 0 && y >= canvas->height) ||
             (diry < 0 && y < 0)) {
@@ -109,7 +114,10 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
         if (y < 0 || y >= canvas->height)
             continue;
 
-        for (x = (i32) fstartx; x != ((i32) fendx) + dirx; x += dirx) {
+        startx = (i32) fstartx;
+        endx = (i32) fendx;
+
+        for (x = startx; x != endx + dirx; x += dirx) {
 
             if ((dirx > 0 && x >= canvas->width) ||
                 (dirx < 0 && x < 0)) {
@@ -124,12 +132,8 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
 
                 x = canvas->width - 1;
             }
-
             canvas->pixels[y * canvas->width + x] = color;
         }
-
-        fendx += k1;
-        fstartx -= k2;
     }
 } 
 
@@ -155,35 +159,46 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     Bitmap* texture, u8 color,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
-    PointTriplet p;
-    i32 midx;
+    // TODO: Implement clipping with the clipping area
+
     f32 k1 = 0.0f;
     f32 k2 = 0.0f;
+    f32 k3 = 0.0f;
+    f32 fx1, fy1, fx2, fy2, fx3, fy3;
+    f32 midx;
 
-    // To avoid a warning
-    p[0] = 0; p[1] = 0;
-    p[2] = 0; p[3] = 0;
-    p[4] = 0; p[5] = 0;
-
-    order_points(x1, y1, x2, y2, x3, y3, p);
-
+    order_points(x1, y1, x2, y2, x3, y3,
+        &x1, &y1, &x2, &y2, &x3, &y3);
+    
     // No triangle to be drawn
-    if (p[1] == p[3] && p[1] == p[5])
+    if (y1 == y2 && y1 == y3)
         return;
 
+    fx1 = (f32) x1; fy1 = (f32) y1;
+    fx2 = (f32) x2; fy2 = (f32) y2;
+    fx3 = (f32) x3; fy3 = (f32) y3;
 
-    // Typecast hell
-    midx = p[4] - (i32) floorf(((f32) (p[5] - p[3])) * ((f32) (p[4] - p[0])) / ((f32) (p[5] - p[1])));
+    midx = x3 - ((y3 - y2) * (x3 - x1)) / (y3 - y1);
 
-    if (p[2] != p[0]) {
+    if (y1 != y3) {
 
-        k1 = ((f32) (p[3] - p[1])) / ((f32) (p[2] - (f32) p[0]));
+        k1 = (fx3 - fx1) / (fy3 - fy1);
     }
-    if (p[4] != p[0]) {
+    if (y1 != y2) {
 
-        k2 = ((f32) (p[5] - p[1])) / ((f32) (p[4] - p[0]));
+        k2 = (fx2 - fx1) / (fy2 - fy1);
     }
+    if (y2 != y3) {
 
-    // draw_triangle_half(tri->canvas, texture, p[2], midx, p[3], p[1], -k1, -k2, color);
-    draw_triangle_half(tri->canvas, texture, p[2], midx, p[3], p[5], k1, k2, color);
+        k3 = (fx3 - fx2) / (fy3 - fy2) ;
+    }
+    
+    // Top
+    draw_triangle_half(tri->canvas, texture, x2, (i32) midx, y2, y1, k1, k2, color);
+    // Bottom
+    draw_triangle_half(tri->canvas, texture, x2, (i32) midx, y2, y3, k1, k3, color);
+
+    canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
+    canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
+    canvas_draw_line(tri->canvas, x1, y1, x3, y3, 0);
 }

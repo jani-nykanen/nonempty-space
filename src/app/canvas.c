@@ -367,3 +367,40 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
         start, end, x, y, xoff, yoff, align,
         draw_bitmap_region_no_flip);
 }
+
+
+void canvas_draw_line(Canvas* canvas, 
+    i32 x1, i32 y1, i32 x2, i32 y2, u8 color) {
+    
+    // Bresenham's line algorithm
+    i32 dx = abs(x2-x1);
+    i32 sx = x1 < x2 ? 1 : -1;
+    i32 dy = (i32) abs(y2 - y1);
+    i32 sy = y1 < y2 ? 1 : -1; 
+    i32 err = (dx > dy ? dx : -dy) / 2;
+    i32 e2;
+    
+    while(true) {
+
+        if (!(y1 >= canvas->clipArea.h || y1 < canvas->clipArea.x ||
+            x1 >= canvas->clipArea.w || x1 < canvas->clipArea.y )) {
+
+            canvas->pixels[y1*canvas->width + x1] = color;
+        }
+        
+        if (x1 == x2 && y1 == y2) 
+            break;
+
+        e2 = err;
+        if (e2 > -dx) { 
+
+            err -= dy; 
+            x1 += sx; 
+        }
+        if (e2 < dy) { 
+
+            err += dx; 
+            y1 += sy; 
+        }
+    }    
+}
