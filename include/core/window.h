@@ -5,6 +5,9 @@
 #include "common/types.h"
 #include "common/error.h"
 
+#include "keycode.h"
+#include "inputstate.h"
+
 
 EMPTY_STRUCT(Window);
 
@@ -22,7 +25,12 @@ void window_register_callbacks(Window* win,
 void window_update_canvas(Window* win, u8* data);
 void window_activate(Window* win);
 
+void window_toggle_fullscreen(Window* win);
+void window_terminate(Window* win);
+
 void window_get_canvas_size(Window* win, i32* width, i32* height);
+
+InputState window_get_key_state(Window* win, KeyCode key);
 
 
 #endif // NONEMPTY_SPACE_CORE_WINDOW_H

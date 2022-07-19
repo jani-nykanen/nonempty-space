@@ -7,9 +7,27 @@
 #include <stdlib.h>
 
 
+static void handle_default_key_shortcuts(Application* app, Window* win) {
+
+    if ((window_get_key_state(win, KEY_LEFT_CONTROL) & STATE_DOWN_OR_PRESSED) == 1 &&
+        window_get_key_state(win, KEY_Q) == STATE_PRESSED) {
+
+        window_terminate(win);
+    }
+
+    if (((window_get_key_state(win, KEY_LEFT_ALT) & STATE_DOWN_OR_PRESSED) == 1 &&
+        window_get_key_state(win, KEY_ENTER) == STATE_PRESSED) ||
+        window_get_key_state(win, KEY_F4) == STATE_PRESSED) {
+
+        window_toggle_fullscreen(win);
+    }
+}
+
+
 static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
-    //...
+    Application* app = (Application*) pApp;
+    handle_default_key_shortcuts(app, win);
 }
 
 

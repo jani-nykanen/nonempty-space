@@ -5,6 +5,7 @@
 #include "glad/gl.h"
 
 #include "renderer.h"
+#include "keyboard.h"
 
 #include <GLFW/glfw3.h>
 
@@ -16,6 +17,7 @@ typedef struct {
 
     GLFWwindow* window;
     Renderer* renderer;
+    Keyboard keyboard;
 
     UpdateCallback updateCb;
     RedrawCallback redrawCb;
@@ -23,6 +25,13 @@ typedef struct {
 
     f64 oldTime;
     bool running;
+
+    // For fullscreen
+    bool fullscreen;
+    i32 oldx;
+    i32 oldy;
+    i32 oldw;
+    i32 oldh;
 
 } _Window;
 
@@ -32,6 +41,19 @@ static _Window* winRef = NULL;
 static void glfw_window_size_callback(GLFWwindow* window, i32 width, i32 height) {
 
     renderer_resize_event(winRef->renderer, width, height);
+}
+
+
+void glfw_keyboard_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
+{
+    if (action == GLFW_PRESS) {
+
+        keyboard_key_pressed_event(&winRef->keyboard, (KeyCode) key);
+    }
+    else if (action == GLFW_RELEASE) {
+
+        keyboard_key_released_event(&winRef->keyboard, (KeyCode) key);
+    }
 }
 
 
@@ -79,6 +101,7 @@ static void main_loop(_Window* win) {
 
         win->updateCb(win->param, (Window*) win, timeStep);
     }
+    keyboard_update(&win->keyboard);
 
     if (win->redrawCb != NULL) {
 
@@ -118,12 +141,21 @@ Window* new_window(u16 canvasWidth, u16 canvasHeight, const str caption, Error* 
     }
     renderer_resize_event(win->renderer, winWidth, winHeight);
 
+    win->keyboard = create_keyboard_manager();
+
     winRef = win;
     glfwSetWindowSizeCallback(win->window, glfw_window_size_callback);
+    glfwSetKeyCallback(win->window, glfw_keyboard_callback);
 
     win->updateCb = NULL;
     win->redrawCb = NULL;
     win->param = NULL;
+
+    win->fullscreen = false;
+    win->oldx = 0;
+    win->oldy = 0;
+    win->oldw = 0;
+    win->oldh = 0;
 
     return (Window*) win;
 }
@@ -178,10 +210,44 @@ void window_activate(Window* _win) {
 }
 
 
+void window_toggle_fullscreen(Window* _win) {
+
+    _Window* win = (_Window*) _win;
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+    win->fullscreen = !win->fullscreen;
+
+    if (win->fullscreen) {
+
+        glfwGetWindowPos(win->window, &win->oldx, &win->oldy);
+        glfwGetWindowSize(win->window, &win->oldw, &win->oldh);
+
+        glfwSetWindowMonitor(win->window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    }
+    else {
+
+        glfwSetWindowMonitor(win->window, NULL, win->oldx, win->oldy, win->oldw, win->oldh, 0);
+    }
+}
+
+
+void window_terminate(Window* win) {
+
+    ((_Window*) win)->running = false;
+}
+
+
 void window_get_canvas_size(Window* _win, i32* width, i32* height) {
 
     _Window* win = (_Window*) _win;
 
     *width = win->renderer->canvasWidth;
     *height = win->renderer->canvasHeight;
+}
+
+
+InputState window_get_key_state(Window* win, KeyCode key) {
+
+    return keyboard_get_key_state(&((_Window*) win)->keyboard, key);
 }
