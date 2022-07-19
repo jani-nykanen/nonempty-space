@@ -110,8 +110,23 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
     PointTriplet p;
+    i32 midx;
+    f32 k1, k2;
 
     order_points(x1, y2, x2, y2, x3, y3, p);
 
-    // TODO: Implement
+    // No triangle to be drawn
+    if (p[1] == p[3] && p[1] == p[5])
+        return;
+
+    // Special case: no top triangle
+    if (p[1] == p[3]) {
+
+        // k1 = ?
+        // k2 = ? 
+
+        draw_triangle_half(tri->canvas, texture,
+            min_i32(p[0], p[2]), max_i32(p[0], p[2]),
+            p[1], p[5], k1, k2, color);
+    }
 }
