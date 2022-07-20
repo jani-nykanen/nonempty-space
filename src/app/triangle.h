@@ -14,6 +14,10 @@ typedef struct {
     AffineMatrix3 uvMatrix;
     AffineMatrix3 uvTransform;
 
+    // TEMP
+    f32 uvx, uvy;
+    f32 uvtx, uvty;
+
 } TriangleRasterizer;
 
 
