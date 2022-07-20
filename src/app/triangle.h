@@ -4,18 +4,15 @@
 
 #include "canvas.h"
 
-
-// Or maybe it is 2x3 matrix, I never remember
-// the order in the notation
-typedef f32 Matrix3x2[6];
+#include "affmat.h"
 
 
 typedef struct {
 
     Canvas* canvas;
 
-    Matrix3x2 uvBaseMatrix;
-    Matrix3x2 uvInvMatrix;
+    AffineMatrix3 uvInvMatrix;
+    AffineMatrix3 uvTransform;
 
 } TriangleRasterizer;
 

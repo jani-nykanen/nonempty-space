@@ -87,6 +87,28 @@ static void order_points(
 }
 
 
+static void compute_uv_transform(TriangleRasterizer* tri,
+    f32 fx1, f32 fy1, f32 fx2, f32 fy2, f32 fx3, f32 fy3) {
+
+    AffineMatrix3 L;
+
+    f32 w = (f32) tri->canvas->width;
+    f32 h = (f32) tri->canvas->height;
+
+    fx1 /= w; fy1 /= h;
+    fx2 /= w; fy2 /= h;
+    fx3 /= w; fy3 /= h;
+
+    L = create_affine_matrix(
+        fx2 - fx1, fx3 - fx1,
+        fy2 - fy1, fy3 - fy1,
+        fx1, fx2);
+
+    // TODO: Check order
+    tri->uvTransform = affmat_multiply(L, tri->uvInvMatrix);
+}
+
+
 static bool is_in_visible_area(Rectangle area, 
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
@@ -102,11 +124,13 @@ static bool is_in_visible_area(Rectangle area,
 }
 
 
-static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
+static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
     i32 startx, i32 endx, i32 starty, i32 endy, f32 k1, f32 k2,
     u8 color) {
 
     // TODO: Implement clipping with the clipping area
+
+    Canvas* canvas = tri->canvas;
 
     i32 dirx, diry;
     i32 x, y;
@@ -114,7 +138,16 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
     f32 fstartx = (f32) startx;
     f32 fendx = (f32) endx;
 
+    f32 w = (f32) canvas->width;
+    f32 h = (f32) canvas->height;
+
+    f32 ftx, fty;
+    i32 tx, ty;
+
     if (starty == endy) return;
+
+    // TEMP
+    if (bmp == NULL) return;
 
     dirx = startx < endx ? 1 : -1;
     diry = starty < endy ? 1 : -1; 
@@ -159,7 +192,16 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
 
                 x = canvas->width - 1;
             }
-            canvas->pixels[y * canvas->width + x] = color;
+
+            affmat_multiply_vector(tri->uvTransform, 
+                ((f32) x) / w, ((f32) y) / h,
+                &ftx, &fty);
+
+            tx = neg_mod_i32((i32) (ftx * (f32) bmp->width), bmp->width);
+            ty = neg_mod_i32((i32) (fty * (f32) bmp->height), bmp->height);
+
+            // canvas->pixels[y * canvas->width + x] = color;
+            canvas->pixels[y * canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
         }
     }
 } 
@@ -183,10 +225,11 @@ void tri_set_uv_coordinates(TriangleRasterizer* tri,
     f32 vx = u3 - u1;
     f32 vy = v3 - v1;
 
-    f32* m = tri->uvBaseMatrix;
-
-    m[0] = ux; m[1] = vx; m[2] = u1;
-    m[3] = uy; m[4] = vy; m[5] = v1;
+    tri->uvInvMatrix = affmat_compute_inverse(
+            create_affine_matrix(
+            ux, vx, 
+            uy, vy,
+            u1, v1));
 }
 
 
@@ -207,6 +250,13 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     // All the points in the same line
     if ((y1 == y2 && y1 == y3))
         return;
+
+    
+    if (texture != NULL) {
+
+        // TODO: Make this look better...
+        compute_uv_transform(tri, (f32) x1, (f32) y1, (f32) x2, (f32) y2, (f32) x3, (f32) y3);
+    }
 
     order_points(x1, y1, x2, y2, x3, y3,
         &x1, &y1, &x2, &y2, &x3, &y3);
@@ -231,9 +281,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     }
     
     // Top
-    draw_triangle_half(tri->canvas, texture, x2, (i32) midx, y2, y1, k1, k2, color);
+    draw_triangle_half(tri, texture, x2, (i32) midx, y2, y1, k1, k2, color);
     // Bottom
-    draw_triangle_half(tri->canvas, texture, x2, (i32) midx, y2, y3, k1, k3, color);
+    draw_triangle_half(tri, texture, x2, (i32) midx, y2, y3, k1, k3, color);
 
     canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
     canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
