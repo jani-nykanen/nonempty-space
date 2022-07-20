@@ -3,6 +3,91 @@
 #include <math.h>
 
 
+Matrix2 mat2(f32 a11, f32 a21, f32 a12, f32 a22) {
+
+	Matrix2 out;
+
+	out.m[0] = a11; out.m[1] = a21;
+	out.m[2] = a12; out.m[3] = a22;
+
+	return out;
+}
+
+
+Matrix2 mat2_zeros() {
+
+	Matrix2 A;
+    i32 i;
+    
+    for (i = 0; i < 4; ++ i) {
+
+        A.m[i] = 0.0f;
+    }
+
+    return A; 
+}
+
+
+Matrix2 mat2_identity() {
+
+	Matrix2 A;
+
+	A.m[0] = 1.0f; A.m[1] = 0.0f;
+	A.m[2] = 0.0f; A.m[3] = 1.0f;
+
+	return A;
+}
+
+
+Matrix2 mat2_inverse(Matrix2 A) {
+
+	const f32 EPS = 0.0001f;
+
+    Matrix2 out;
+
+    f32 det = A.m[0] * A.m[3] - A.m[2] * A.m[1];
+    f32 invDet;
+
+    if (fabsf(det) < EPS) {
+
+        return mat2_identity();
+    }
+
+    invDet = 1.0f / det;
+
+    out.m[0] =  invDet * A.m[3]; out.m[1] = -invDet * A.m[1];
+    out.m[2] = -invDet * A.m[2]; out.m[3] =  invDet * A.m[0];
+
+	return out;
+}
+
+
+Matrix2 mat2_multiply(Matrix2 left, Matrix2 right) {
+
+	Matrix2 out = mat2_zeros();
+	i32 i, j, k;
+
+    for (i = 0; i < 2; ++ i) {
+
+        for (j = 0; j < 2; ++ j) {
+
+            for (k = 0; k < 2; ++ k) {
+
+                out.m[i*2 + j] += left.m[i*2 + k] * right.m[k*2 + j];
+            }
+        }
+    }
+	return out;
+}
+
+
+void mat2_multiply_vector(Matrix2 A, f32 x, f32 y, f32* outx, f32* outy) {
+
+	*outx =	A.m[0] * x + A.m[1] * y;
+	*outy =	A.m[2] * x + A.m[3] * y;
+}
+
+
 Matrix4 mat4_zero() {
 
     Matrix4 A;

@@ -2,19 +2,19 @@
 #define NONEMPTY_SPACE_APP_H
 
 
-#include "canvas.h"
+#include "common/matrix.h"
 
-#include "affmat.h"
+#include "canvas.h"
 
 
 typedef struct {
 
     Canvas* canvas;
 
-    AffineMatrix3 uvMatrix;
-    AffineMatrix3 uvTransform;
+    Matrix2 uvMatrix;
+    Matrix2 uvTransform;
 
-    // TEMP
+    // TODO: Rename?
     f32 uvx, uvy;
     f32 uvtx, uvty;
 

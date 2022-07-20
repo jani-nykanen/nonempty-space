@@ -90,10 +90,9 @@ static void order_points(
 static void compute_uv_matrix(TriangleRasterizer* tri,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3) {
 
-    tri->uvMatrix = create_affine_matrix(
-            u2 - u1, u3 - u1, 
-            v2 - v1, v3 - v1,
-            0, 0);
+    tri->uvMatrix = mat2(
+        u2 - u1, u3 - u1, 
+        v2 - v1, v3 - v1);
 
     tri->uvx = u1;
     tri->uvy = v1;
@@ -103,7 +102,7 @@ static void compute_uv_matrix(TriangleRasterizer* tri,
 static void compute_uv_transform(TriangleRasterizer* tri,
     f32 fx1, f32 fy1, f32 fx2, f32 fy2, f32 fx3, f32 fy3) {
 
-    AffineMatrix3 invSpace;
+    Matrix2 invSpace;
 
     f32 w = (f32) tri->canvas->width;
     f32 h = (f32) tri->canvas->height;
@@ -112,18 +111,15 @@ static void compute_uv_transform(TriangleRasterizer* tri,
     fx2 /= w; fy2 /= h;
     fx3 /= w; fy3 /= h;
 
-    invSpace = affmat_compute_inverse(
-            create_affine_matrix(
-                fx2 - fx1, fx3 - fx1,
-                fy2 - fy1, fy3 - fy1,
-                0, 0)
+    invSpace = mat2_inverse(
+        mat2(fx2 - fx1, fx3 - fx1, 
+             fy2 - fy1, fy3 - fy1)
         );
 
     tri->uvtx = fx1;
     tri->uvty = fy1;
 
-    // TODO: Check order
-    tri->uvTransform = affmat_multiply(tri->uvMatrix, invSpace);
+    tri->uvTransform = mat2_multiply(tri->uvMatrix, invSpace);
 }
 
 
@@ -211,8 +207,10 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
                 x = canvas->width - 1;
             }
 
-            affmat_multiply_vector(tri->uvTransform, 
-                ((f32) x) / w - tri->uvtx, ((f32) y) / h - tri->uvty,
+            mat2_multiply_vector(
+                tri->uvTransform, 
+                ((f32) x) / w - tri->uvtx, 
+                ((f32) y) / h - tri->uvty,
                 &ftx, &fty);
 
             tx = neg_mod_i32((i32) ((ftx + tri->uvx) * (f32) bmp->width), bmp->width);

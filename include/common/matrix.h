@@ -1,8 +1,16 @@
 #ifndef NONEMPTY_SPACE_COMMON_MATRIX_H
 #define NONEMPTY_SPACE_COMMON_MATRIX_H
 
+
 #include "types.h"
 #include "vector.h"
+
+
+typedef struct {
+
+    f32 m[4];
+
+} Matrix2;
 
 
 typedef struct {
@@ -10,6 +18,16 @@ typedef struct {
     f32 m[16];
 
 } Matrix4;
+
+
+Matrix2 mat2(f32 a11, f32 a21, f32 a12, f32 a22);
+
+Matrix2 mat2_zeros();
+Matrix2 mat2_identity();
+Matrix2 mat2_inverse(Matrix2 A);
+
+Matrix2 mat2_multiply(Matrix2 left, Matrix2 right);
+void mat2_multiply_vector(Matrix2 A, f32 x, f32 y, f32* outx, f32* outy);
 
 
 Matrix4 mat4_zeros();
