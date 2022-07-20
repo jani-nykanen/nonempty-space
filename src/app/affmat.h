@@ -13,8 +13,8 @@ typedef struct {
 
 
 AffineMatrix3 create_affine_matrix(
-    f32 a11, f32 a12, 
-    f32 a21, f32 a22, 
+    f32 a11, f32 a21, 
+    f32 a12, f32 a22, 
     f32 b1, f32 b2);
 
 AffineMatrix3 affmat_compute_inverse(AffineMatrix3 M);

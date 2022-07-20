@@ -4,8 +4,8 @@
 
 
 AffineMatrix3 create_affine_matrix(
-    f32 a11, f32 a12, 
-    f32 a21, f32 a22, 
+    f32 a11, f32 a21, 
+    f32 a12, f32 a22, 
     f32 b1, f32 b2) {
 
     AffineMatrix3 M;
@@ -30,16 +30,19 @@ AffineMatrix3 affmat_compute_inverse(AffineMatrix3 M) {
 
     if (fabsf(det) < EPS) {
 
-        return create_affine_matrix(1, 0, 0, 1, 0, 0);
+        return create_affine_matrix(
+            1, 0, 
+            0, 1, 
+            M.b[0], M.b[1]);
     }
 
     invDet = 1.0f / det;
 
     out.A[0] = invDet * M.A[3]; out.A[1] = -invDet * M.A[1];
-    out.A[2] = -invDet * M.A[2]; out.A[3] = -invDet * M.A[0];
+    out.A[2] = -invDet * M.A[2]; out.A[3] = invDet * M.A[0];
 
     out.b[0] = -(out.A[0] * M.b[0] + out.A[1] * M.b[1]);
-    out.b[1] = -(out.A[2] * M.b[2] + out.A[3] * M.b[3]);
+    out.b[1] = -(out.A[2] * M.b[0] + out.A[3] * M.b[1]);
 
     return out;
 }

@@ -90,7 +90,7 @@ static void order_points(
 static void compute_uv_transform(TriangleRasterizer* tri,
     f32 fx1, f32 fy1, f32 fx2, f32 fy2, f32 fx3, f32 fy3) {
 
-    AffineMatrix3 L;
+    AffineMatrix3 invSpace;
 
     f32 w = (f32) tri->canvas->width;
     f32 h = (f32) tri->canvas->height;
@@ -99,13 +99,15 @@ static void compute_uv_transform(TriangleRasterizer* tri,
     fx2 /= w; fy2 /= h;
     fx3 /= w; fy3 /= h;
 
-    L = create_affine_matrix(
-        fx2 - fx1, fx3 - fx1,
-        fy2 - fy1, fy3 - fy1,
-        fx1, fx2);
+    invSpace = affmat_compute_inverse(
+            create_affine_matrix(
+                fx2 - fx1, fx3 - fx1,
+                fy2 - fy1, fy3 - fy1,
+                fx1, fy1)
+        );
 
     // TODO: Check order
-    tri->uvTransform = affmat_multiply(L, tri->uvInvMatrix);
+    tri->uvTransform = affmat_multiply(invSpace, tri->uvMatrix);
 }
 
 
@@ -220,16 +222,10 @@ TriangleRasterizer create_triangle_rasterizer(Canvas* canvas) {
 void tri_set_uv_coordinates(TriangleRasterizer* tri,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3) {
 
-    f32 ux = u2 - u1;
-    f32 uy = v2 - v1;
-    f32 vx = u3 - u1;
-    f32 vy = v3 - v1;
-
-    tri->uvInvMatrix = affmat_compute_inverse(
-            create_affine_matrix(
-            ux, vx, 
-            uy, vy,
-            u1, v1));
+    tri->uvMatrix = create_affine_matrix(
+            u2 - u1, u3 - u1, 
+            v2 - v1, v3 - v1,
+            u1, v1);
 }
 
 

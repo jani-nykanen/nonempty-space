@@ -11,7 +11,7 @@ typedef struct {
 
     Canvas* canvas;
 
-    AffineMatrix3 uvInvMatrix;
+    AffineMatrix3 uvMatrix;
     AffineMatrix3 uvTransform;
 
 } TriangleRasterizer;
