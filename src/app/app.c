@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 
 static void handle_default_key_shortcuts(Application* app, Window* win) {
@@ -28,6 +29,31 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
+
+    app->testAngle = fmodf(app->testAngle + 0.05f * timeStep, M_PI * 2.0f);
+}
+
+
+static void draw_spinning_triangle(Application* app, Canvas* canvas) {
+
+    const f32 RADIUS = 72.0f;
+
+    f32 cx = (f32) (canvas->width/2);
+    f32 cy = (f32) (canvas->height/2);
+
+    i32 x1 = (i32) (cx + cosf(app->testAngle) * RADIUS);
+    i32 y1 = (i32) (cy + sinf(app->testAngle) * RADIUS);
+
+    i32 x2 = (i32) (cx + cosf(app->testAngle + M_PI*2.0f / 3.0f) * RADIUS);
+    i32 y2 = (i32) (cy + sinf(app->testAngle + M_PI*2.0f / 3.0f) * RADIUS);
+
+    i32 x3 = (i32) (cx + cosf(app->testAngle + M_PI*4.0f / 3.0f) * RADIUS);
+    i32 y3 = (i32) (cy + sinf(app->testAngle + M_PI*4.0f / 3.0f) * RADIUS);
+
+    tri_set_uv_coordinates(&app->tri, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f, 1.0f);
+    tri_draw_triangle(&app->tri, 
+        app->cubeTextureNoise, 255, 
+        x1, y1, x2, y2, x3, y3);
 }
 
 
@@ -40,10 +66,7 @@ static void redraw_callback(void* pApp, Window* win) {
 
     canvas_draw_bitmap_fast(canvas, app->cubeTextureNoise, 0, 0);
 
-    tri_draw_triangle(&app->tri, app->cubeTextureNoise, 255, 
-        32, 32, 
-        192, 96, 
-        96, 160);
+    draw_spinning_triangle(app, canvas);
 
     canvas_update_window_content(canvas, win);
 }
@@ -79,6 +102,8 @@ Application* new_application(Window* win, Error* err) {
     }
 
     app->tri = create_triangle_rasterizer(app->canvas);
+
+    app->testAngle = 0.0f;
 
     return app;
 }

@@ -23,7 +23,6 @@ typedef struct {
     RedrawCallback redrawCb;
     void* param;
 
-    f64 oldTime;
     bool running;
 
     // For fullscreen
@@ -84,12 +83,10 @@ static void main_loop(_Window* win) {
 
     const f32 TICK = 1.0f / 60.0f;
 
-    f32 deltaTime, timeStep;
+    f64 deltaTime = glfwGetTime();
+    f64 timeStep = deltaTime / TICK;
 
-    f64 newTime = glfwGetTime();
-
-    deltaTime = (f32) (newTime - win->oldTime);
-    timeStep = deltaTime / TICK;
+    glfwSetTime(0.0);
 
     if (glfwWindowShouldClose(win->window)) {
 
@@ -200,7 +197,6 @@ void window_activate(Window* _win) {
     _Window* win = (_Window*) _win;
 
     glfwSetTime(0.0);
-    win->oldTime = 0.0;
     win->running = true;
 
     while (win->running) {

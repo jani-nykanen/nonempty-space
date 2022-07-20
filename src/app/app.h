@@ -14,6 +14,8 @@ typedef struct {
     Bitmap* cubeTextureNoise;
     TriangleRasterizer tri;
 
+    f32 testAngle;
+
 } Application;
 
 

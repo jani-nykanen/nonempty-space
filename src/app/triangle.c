@@ -1,4 +1,5 @@
 #include "triangle.h"
+#include "mathext.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -86,9 +87,26 @@ static void order_points(
 }
 
 
+static bool is_in_visible_area(Rectangle area, 
+    i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
+
+    i32 minx = min_i32(x1, min_i32(x2, x3));
+    i32 maxx = max_i32(x1, max_i32(x2, x3));
+    i32 miny = min_i32(y1, min_i32(y2, y3));
+    i32 maxy = max_i32(y1, max_i32(y2, y3));
+
+    return minx < area.x + area.w &&
+           maxx >= area.x &&
+           miny < area.y + area.h &&
+           maxy >= area.y;
+}
+
+
 static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
     i32 startx, i32 endx, i32 starty, i32 endy, f32 k1, f32 k2,
     u8 color) {
+
+    // TODO: Implement clipping with the clipping area
 
     i32 dirx, diry;
     i32 x, y;
@@ -101,6 +119,7 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
     dirx = startx < endx ? 1 : -1;
     diry = starty < endy ? 1 : -1; 
 
+    // TODO: OPTIMIZE!
     for (y = starty; y != endy + diry; 
         y += diry, 
         fendx += k1 * diry,
@@ -116,6 +135,14 @@ static void draw_triangle_half(Canvas* canvas, Bitmap* bmp,
 
         startx = (i32) fstartx;
         endx = (i32) fendx;
+
+        if ((startx >= canvas->clipArea.x + canvas->clipArea.w &&
+             endx >= canvas->clipArea.x + canvas->clipArea.w) ||
+             (startx < canvas->clipArea.x &&
+             endx < canvas->clipArea.x)) {
+            
+            continue;
+        }
 
         for (x = startx; x != endx + dirx; x += dirx) {
 
@@ -151,7 +178,15 @@ TriangleRasterizer create_triangle_rasterizer(Canvas* canvas) {
 void tri_set_uv_coordinates(TriangleRasterizer* tri,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3) {
 
-    // ...
+    f32 ux = u2 - u1;
+    f32 uy = v2 - v1;
+    f32 vx = u3 - u1;
+    f32 vy = v3 - v1;
+
+    f32* m = tri->uvBaseMatrix;
+
+    m[0] = ux; m[1] = vx; m[2] = u1;
+    m[3] = uy; m[4] = vy; m[5] = v1;
 }
 
 
@@ -159,21 +194,23 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     Bitmap* texture, u8 color,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
-    // TODO: Implement clipping with the clipping area
-
     f32 k1 = 0.0f;
     f32 k2 = 0.0f;
     f32 k3 = 0.0f;
     f32 fx1, fy1, fx2, fy2, fx3, fy3;
     f32 midx;
 
+    // Outside the render area
+    if (!is_in_visible_area(tri->canvas->clipArea, x1, y1, x2, y2, x3, y3))
+        return;
+
+    // All the points in the same line
+    if ((y1 == y2 && y1 == y3))
+        return;
+
     order_points(x1, y1, x2, y2, x3, y3,
         &x1, &y1, &x2, &y2, &x3, &y3);
     
-    // No triangle to be drawn
-    if (y1 == y2 && y1 == y3)
-        return;
-
     fx1 = (f32) x1; fy1 = (f32) y1;
     fx2 = (f32) x2; fy2 = (f32) y2;
     fx3 = (f32) x3; fy3 = (f32) y3;
