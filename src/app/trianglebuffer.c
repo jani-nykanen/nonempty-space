@@ -6,11 +6,32 @@ Triangle create_triangle(
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3,
     Bitmap* texture, i32 tint, f32 depth) {
 
+    Triangle t;
+
+    t.x1 = x1;
+    t.y1 = y1;
+    t.x2 = x2;
+    t.y2 = y2;
+    t.x3 = x3;
+    t.y3 = y3;
+
+    t.u1 = u1;
+    t.v1 = v1;
+    t.u2 = u2;
+    t.v2 = v2;
+    t.u3 = u3;
+    t.v3 = v3;
+
+    t.texture = texture;
+    t.tint = tint;
+    t.depth = depth;
+
+    return t;
 }
 
 
 TriangleBuffer* new_triangle_buffer(u32 maxSize, Error* err) {
-
+    
 }
 
 
