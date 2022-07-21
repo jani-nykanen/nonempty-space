@@ -30,16 +30,17 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
 
-    app->testAngle = fmodf(app->testAngle + 0.05f * timeStep, M_PI * 2.0f);
+    app->testAngle = fmodf(app->testAngle - 0.05f * timeStep, M_PI * 2.0f);
 }
 
 
 static void draw_spinning_triangle(Application* app, Canvas* canvas) {
 
     const f32 RADIUS = 72.0f;
+    const f32 CENTER_RADIUS = 32.0f;
 
-    f32 cx = (f32) (canvas->width/2);
-    f32 cy = (f32) (canvas->height/2);
+    f32 cx = (f32) (canvas->width/2)  + cosf(-app->testAngle) * CENTER_RADIUS;
+    f32 cy = (f32) (canvas->height/2) + sinf(-app->testAngle) * CENTER_RADIUS;
 
     i32 x1 = (i32) (cx + cosf(app->testAngle) * RADIUS);
     i32 y1 = (i32) (cy + sinf(app->testAngle) * RADIUS);

@@ -2,9 +2,8 @@
 #define NONEMPTY_SPACE_APP_H
 
 
-#include "common/matrix.h"
-
 #include "canvas.h"
+#include "fpointmatrix.h"
 
 
 typedef struct {
@@ -13,12 +12,11 @@ typedef struct {
 
     f32 u1, v1, u2, v2, u3, v3;
 
-    Matrix2 uvMatrix;
-    Matrix2 uvTransform;
+    FixedPointMatrix2 uvTransform;
 
     // TODO: Rename?
-    f32 uvx, uvy;
-    f32 uvtx, uvty;
+    i32 uvx, uvy;
+    i32 uvtx, uvty;
 
 } TriangleRasterizer;
 

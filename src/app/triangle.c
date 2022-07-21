@@ -108,8 +108,8 @@ static void compute_uv_transform(
         u2 - u1, u3 - u1, 
         v2 - v1, v3 - v1);
 
-    tri->uvx = u1;
-    tri->uvy = v1;
+    tri->uvx = (i32) u1;
+    tri->uvy = (i32) v1;
 
     invSpace = mat2_inverse(
         mat2((f32) (fx2 - fx1), (f32) (fx3 - fx1), 
@@ -119,7 +119,8 @@ static void compute_uv_transform(
     tri->uvtx = fx1;
     tri->uvty = fy1;
 
-    tri->uvTransform = mat2_multiply(uvMatrix, invSpace);
+    tri->uvTransform = mat2_to_fixed_point_mat2(
+        mat2_multiply(uvMatrix, invSpace), FIXED_POINT_PRECISION);
 }
 
 
@@ -146,13 +147,14 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
 
     Canvas* canvas = tri->canvas;
 
-    i32 dirx, diry;
+    i32 diry;
     i32 x, y;
 
     i32 fstartx = startx << FIXED_POINT_PRECISION;
     i32 fendx = endx << FIXED_POINT_PRECISION;
 
-    f32 ftx, fty;
+    i32 minx, maxx;
+
     i32 tx, ty;
 
     if (starty == endy) return;
@@ -160,60 +162,37 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
     // TEMP
     if (bmp == NULL) return;
 
-    dirx = startx < endx ? 1 : -1;
     diry = starty < endy ? 1 : -1; 
 
-    // TODO: OPTIMIZE!
     for (y = starty; y != endy + diry; 
         y += diry, 
         fendx += k1 * diry,
         fstartx += k2 * diry) {
 
-        if ((diry > 0 && y >= canvas->height) ||
-            (diry < 0 && y < 0)) {
-
+        if ((diry > 0 && y >= canvas->height) || (diry < 0 && y < 0))
             break;
-        }
+        
         if (y < 0 || y >= canvas->height)
             continue;
 
         startx = fstartx >> FIXED_POINT_PRECISION;
         endx = fendx >> FIXED_POINT_PRECISION;
 
-        if ((startx >= canvas->clipArea.x + canvas->clipArea.w &&
-             endx >= canvas->clipArea.x + canvas->clipArea.w) ||
-             (startx < canvas->clipArea.x &&
-             endx < canvas->clipArea.x)) {
-            
-            continue;
-        }
+        minx = max_i32(canvas->clipArea.x, min_i32(startx, endx));
+        maxx = min_i32(canvas->clipArea.x + canvas->clipArea.w-1, max_i32(startx, endx));
 
-        for (x = startx; x != endx + dirx; x += dirx) {
+        for (x = minx; x <= maxx; ++ x) {
 
-            if ((dirx > 0 && x >= canvas->width) ||
-                (dirx < 0 && x < 0)) {
+            fpmat2_multiply_vector(
+                tri->uvTransform,
+                FIXED_POINT_PRECISION, 
+                x - tri->uvtx, 
+                y - tri->uvty,
+                &tx, &ty);
 
-                break;
-            }
-            if (x < 0) {
+            tx = neg_mod_i32(tx + tri->uvx, bmp->width);
+            ty = neg_mod_i32(ty + tri->uvy, bmp->height);
 
-                x = 0;
-            }
-            else if(x >= canvas->width) {
-
-                x = canvas->width - 1;
-            }
-
-            mat2_multiply_vector(
-                tri->uvTransform, 
-                ((f32) x) - tri->uvtx, 
-                ((f32) y) - tri->uvty,
-                &ftx, &fty);
-
-            tx = neg_mod_i32((i32) (ftx + tri->uvx), bmp->width);
-            ty = neg_mod_i32((i32) (fty + tri->uvy), bmp->height);
-
-            // canvas->pixels[y * canvas->width + x] = color;
             canvas->pixels[y * canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
         }
     }
@@ -249,7 +228,7 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     i32 k1 = 0;
     i32 k2 = 0;
     i32 k3 = 0;
-    f32 midx;
+    i32 midx;
 
     // Outside the render area
     if (!is_in_visible_area(tri->canvas->clipArea, x1, y1, x2, y2, x3, y3))
@@ -258,18 +237,18 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     // All the points in the same line
     if ((y1 == y2 && y1 == y3))
         return;
-
     
     if (texture != NULL) {
 
-        // TODO: Make this look better...
         compute_uv_transform(tri, texture, x1, y1, x2, y2, x3, y3);
     }
 
     order_points(x1, y1, x2, y2, x3, y3,
         &x1, &y1, &x2, &y2, &x3, &y3);
     
-    midx = x3 - ((y3 - y2) * (x3 - x1)) / (y3 - y1);
+    midx = ((y3 - y2) * (x3 - x1)) << FIXED_POINT_PRECISION;
+    midx /= (y3 - y1);
+    midx = x3 - (midx >> FIXED_POINT_PRECISION);
 
     if (y1 != y3) {
 
