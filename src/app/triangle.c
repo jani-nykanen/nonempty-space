@@ -5,6 +5,9 @@
 #include <math.h>
 
 
+#define FIXED_POINT_PRECISION 12
+
+
 typedef i32 PointTriplet[6];
 
 
@@ -87,39 +90,36 @@ static void order_points(
 }
 
 
-static void compute_uv_matrix(TriangleRasterizer* tri,
-    f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3) {
+static void compute_uv_transform(
+    TriangleRasterizer* tri, Bitmap* bmp,
+    i32 fx1, i32 fy1, i32 fx2, i32 fy2, i32 fx3, i32 fy3) {
 
-    tri->uvMatrix = mat2(
+    Matrix2 uvMatrix;
+    Matrix2 invSpace;
+
+    f32 u1 = tri->u1 * bmp->width;
+    f32 v1 = tri->v1 * bmp->height;
+    f32 u2 = tri->u2 * bmp->width;
+    f32 v2 = tri->v2 * bmp->height;
+    f32 u3 = tri->u3 * bmp->width;
+    f32 v3 = tri->v3 * bmp->height;
+
+    uvMatrix = mat2(
         u2 - u1, u3 - u1, 
         v2 - v1, v3 - v1);
 
     tri->uvx = u1;
     tri->uvy = v1;
-}
-
-
-static void compute_uv_transform(TriangleRasterizer* tri,
-    f32 fx1, f32 fy1, f32 fx2, f32 fy2, f32 fx3, f32 fy3) {
-
-    Matrix2 invSpace;
-
-    f32 w = (f32) tri->canvas->width;
-    f32 h = (f32) tri->canvas->height;
-
-    fx1 /= w; fy1 /= h;
-    fx2 /= w; fy2 /= h;
-    fx3 /= w; fy3 /= h;
 
     invSpace = mat2_inverse(
-        mat2(fx2 - fx1, fx3 - fx1, 
-             fy2 - fy1, fy3 - fy1)
+        mat2((f32) (fx2 - fx1), (f32) (fx3 - fx1), 
+             (f32) (fy2 - fy1), (f32) (fy3 - fy1))
         );
 
     tri->uvtx = fx1;
     tri->uvty = fy1;
 
-    tri->uvTransform = mat2_multiply(tri->uvMatrix, invSpace);
+    tri->uvTransform = mat2_multiply(uvMatrix, invSpace);
 }
 
 
@@ -139,7 +139,7 @@ static bool is_in_visible_area(Rectangle area,
 
 
 static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
-    i32 startx, i32 endx, i32 starty, i32 endy, f32 k1, f32 k2,
+    i32 startx, i32 endx, i32 starty, i32 endy, i32 k1, i32 k2,
     u8 color) {
 
     // TODO: Implement clipping with the clipping area
@@ -149,11 +149,8 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
     i32 dirx, diry;
     i32 x, y;
 
-    f32 fstartx = (f32) startx;
-    f32 fendx = (f32) endx;
-
-    f32 w = (f32) canvas->width;
-    f32 h = (f32) canvas->height;
+    i32 fstartx = startx << FIXED_POINT_PRECISION;
+    i32 fendx = endx << FIXED_POINT_PRECISION;
 
     f32 ftx, fty;
     i32 tx, ty;
@@ -180,8 +177,8 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
         if (y < 0 || y >= canvas->height)
             continue;
 
-        startx = (i32) fstartx;
-        endx = (i32) fendx;
+        startx = fstartx >> FIXED_POINT_PRECISION;
+        endx = fendx >> FIXED_POINT_PRECISION;
 
         if ((startx >= canvas->clipArea.x + canvas->clipArea.w &&
              endx >= canvas->clipArea.x + canvas->clipArea.w) ||
@@ -209,12 +206,12 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
 
             mat2_multiply_vector(
                 tri->uvTransform, 
-                ((f32) x) / w - tri->uvtx, 
-                ((f32) y) / h - tri->uvty,
+                ((f32) x) - tri->uvtx, 
+                ((f32) y) - tri->uvty,
                 &ftx, &fty);
 
-            tx = neg_mod_i32((i32) ((ftx + tri->uvx) * (f32) bmp->width), bmp->width);
-            ty = neg_mod_i32((i32) ((fty + tri->uvy) * (f32) bmp->height), bmp->height);
+            tx = neg_mod_i32((i32) (ftx + tri->uvx), bmp->width);
+            ty = neg_mod_i32((i32) (fty + tri->uvy), bmp->height);
 
             // canvas->pixels[y * canvas->width + x] = color;
             canvas->pixels[y * canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
@@ -236,7 +233,12 @@ TriangleRasterizer create_triangle_rasterizer(Canvas* canvas) {
 void tri_set_uv_coordinates(TriangleRasterizer* tri,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3) {
 
-    compute_uv_matrix(tri, u1, v1, u2, v2, u3, v3);
+    tri->u1 = u1;
+    tri->v1 = v1;
+    tri->u2 = u2;
+    tri->v2 = v2;
+    tri->u3 = u3;
+    tri->v3 = v3;
 }
 
 
@@ -244,10 +246,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     Bitmap* texture, u8 color,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
-    f32 k1 = 0.0f;
-    f32 k2 = 0.0f;
-    f32 k3 = 0.0f;
-    f32 fx1, fy1, fx2, fy2, fx3, fy3;
+    i32 k1 = 0;
+    i32 k2 = 0;
+    i32 k3 = 0;
     f32 midx;
 
     // Outside the render area
@@ -262,29 +263,28 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     if (texture != NULL) {
 
         // TODO: Make this look better...
-        compute_uv_transform(tri, (f32) x1, (f32) y1, (f32) x2, (f32) y2, (f32) x3, (f32) y3);
+        compute_uv_transform(tri, texture, x1, y1, x2, y2, x3, y3);
     }
 
     order_points(x1, y1, x2, y2, x3, y3,
         &x1, &y1, &x2, &y2, &x3, &y3);
     
-    fx1 = (f32) x1; fy1 = (f32) y1;
-    fx2 = (f32) x2; fy2 = (f32) y2;
-    fx3 = (f32) x3; fy3 = (f32) y3;
-
     midx = x3 - ((y3 - y2) * (x3 - x1)) / (y3 - y1);
 
     if (y1 != y3) {
 
-        k1 = (fx3 - fx1) / (fy3 - fy1);
+        k1 = (x3 - x1) << FIXED_POINT_PRECISION;
+        k1 /= (y3 - y1);
     }
     if (y1 != y2) {
 
-        k2 = (fx2 - fx1) / (fy2 - fy1);
+        k2 = (x2 - x1) << FIXED_POINT_PRECISION;
+        k2 /= (y2 - y1);
     }
     if (y2 != y3) {
 
-        k3 = (fx3 - fx2) / (fy3 - fy2) ;
+        k3 = (x3 - x2) << FIXED_POINT_PRECISION;
+        k3 /= (y3 - y2);
     }
     
     // Top

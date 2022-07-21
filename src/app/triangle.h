@@ -11,6 +11,8 @@ typedef struct {
 
     Canvas* canvas;
 
+    f32 u1, v1, u2, v2, u3, v3;
+
     Matrix2 uvMatrix;
     Matrix2 uvTransform;
 
