@@ -25,7 +25,7 @@ typedef struct {
 ModelGenerator* new_model_generator(u32 bufferSize, Error* err);
 void dispose_model_generator(ModelGenerator* mgen);
 
-void mgen_add_cube(ModelGenerator* mgen, Vector4 center, Vector4 size, i32 subdivide);
+Mesh* mgen_generate_unit_cube(ModelGenerator* mgen, i32 subdivide, Error* err);
 
 Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err);
 
