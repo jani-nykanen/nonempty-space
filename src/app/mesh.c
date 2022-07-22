@@ -9,9 +9,35 @@
 Mesh* new_mesh(const f32* vertices, const f32* uvs, const f32* normals, const u16* indices,
     u32 vertexCount, u32 uvCount, u32 normalCount, u32 indexCount, Error* err) {
 
-    // TODO: Implement
+    Mesh* mesh = (Mesh*) calloc(1, sizeof(Mesh));
+    if (mesh == NULL) {
 
-    return NULL;
+        *err = memory_error();
+        return NULL;
+    }
+
+    if ((mesh->vertices = (f32*) calloc(vertexCount, sizeof(f32))) == NULL ||
+        (mesh->uvs = (f32*) calloc(uvCount, sizeof(f32))) == NULL ||
+        (mesh->normals = (f32*) calloc(normalCount, sizeof(f32))) == NULL ||
+        (mesh->indices = (u16*) calloc(indexCount, sizeof(u16))) == NULL) {
+
+        *err = memory_error();
+        dispose_mesh(mesh);
+
+        return NULL;
+    }
+
+    mesh->vertexCount = vertexCount;
+    mesh->uvCount = uvCount;
+    mesh->normalCount = normalCount;
+    mesh->indexCount = indexCount;
+
+    memcpy(mesh->vertices, vertices, sizeof(f32) * vertexCount);
+    memcpy(mesh->uvs, uvs, sizeof(f32) * uvCount);
+    memcpy(mesh->normals, normals, sizeof(f32) * normalCount);
+    memcpy(mesh->indices, indices, sizeof(u16) * indexCount);
+
+    return mesh;
 }
 
 
