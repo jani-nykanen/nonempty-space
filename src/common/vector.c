@@ -93,3 +93,9 @@ Vector4 vec4_scalar_multiply(Vector4 v, f32 scalar) {
 
     return vec4(v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar);
 }
+
+
+Vector4 vec4_add(Vector4 a, Vector4 b) {
+
+    return vec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+}

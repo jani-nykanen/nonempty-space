@@ -21,12 +21,26 @@ static void add_plane(ModelGenerator* mgen,
     i32 subdivide) {
 
     i32 i, j;
+    Vector4 A, B, C, D;
+
+    f32 step = 1.0f / subdivide;
+
+    Vector4 scaledDirX = vec4_scalar_multiply(dirx, step);
+    Vector4 scaledDirY = vec4_scalar_multiply(diry, step);
 
     for (j = 0; j < subdivide; ++ j) {
 
         for (i = 0; i < subdivide; ++ i) {
 
-            // TODO: Everything
+            A = vec4_add(start,
+                    vec4_add(
+                        vec4_scalar_multiply(dirx, i*step),
+                        vec4_scalar_multiply(diry, j*step)
+                    ));
+            B = vec4_add(A, scaledDirX);
+            C = vec4_add(A, scaledDirY);
+            D = vec4_add(A, vec4_add(scaledDirX, scaledDirY));
+
         }
     }
 }
