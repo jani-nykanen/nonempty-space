@@ -1,6 +1,19 @@
 #include "transformations.h"
 
 
+static void transf_compute_product(Transformations* transf) {
+
+    if (transf->productComputed) 
+        return;
+
+    transf->product = mat4_multiply(
+        transf->projection, mat4_multiply(
+            transf->view, transf->model)
+        );
+
+    transf->productComputed = true;
+}
+
 
 Transformations create_transformations_manager() {
 
@@ -92,23 +105,9 @@ void transf_set_view(Transformations* transf,
 }
 
 
-Matrix4* transf_compute_product(Transformations* transf) {
-
-    if (transf->productComputed) 
-        return &transf->product;
-
-    transf->product = mat4_multiply(
-        transf->projection, mat4_multiply(
-            transf->view, transf->model)
-        );
-
-    transf->productComputed = true;
-
-    return &transf->product;
-}
-
-
 Vector4 transf_apply_to_vector(Transformations* transf, Vector4 vec) {
+
+    transf_compute_product(transf);
 
     return mat4_multiply_vector(transf->product, vec);
 }

@@ -40,8 +40,6 @@ void transf_set_perspective_projection(Transformations* transf,
 void transf_set_view(Transformations* transf,
     Vector4 eye, Vector4 lookAt, Vector4 up);
 
-Matrix4* transf_compute_product(Transformations* transf);
-
 Vector4 transf_apply_to_vector(Transformations* transf, Vector4 vec);
 
 

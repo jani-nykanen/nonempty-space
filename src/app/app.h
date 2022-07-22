@@ -6,13 +6,18 @@
 
 #include "canvas.h"
 #include "rasterizer.h"
+#include "3d.h"
 
 
 typedef struct {
 
     Canvas* canvas;
     Bitmap* cubeTextureNoise;
-    TriangleRasterizer tri;
+    
+    TriangleRasterizer rasterizer;
+    TriangleBuffer* tribuffer;
+    Transformations transf;
+    Renderer3D r3d;
 
     f32 testAngle;
 

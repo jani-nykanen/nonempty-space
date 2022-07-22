@@ -34,40 +34,30 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 }
 
 
-static void draw_spinning_triangle(Application* app, Canvas* canvas) {
-
-    const f32 RADIUS = 72.0f;
-    const f32 CENTER_RADIUS = 32.0f;
-
-    f32 cx = (f32) (canvas->width/2)  + cosf(-app->testAngle) * CENTER_RADIUS;
-    f32 cy = (f32) (canvas->height/2) + sinf(-app->testAngle) * CENTER_RADIUS;
-
-    i32 x1 = (i32) (cx + cosf(app->testAngle) * RADIUS);
-    i32 y1 = (i32) (cy + sinf(app->testAngle) * RADIUS);
-
-    i32 x2 = (i32) (cx + cosf(app->testAngle + M_PI*2.0f / 3.0f) * RADIUS);
-    i32 y2 = (i32) (cy + sinf(app->testAngle + M_PI*2.0f / 3.0f) * RADIUS);
-
-    i32 x3 = (i32) (cx + cosf(app->testAngle + M_PI*4.0f / 3.0f) * RADIUS);
-    i32 y3 = (i32) (cy + sinf(app->testAngle + M_PI*4.0f / 3.0f) * RADIUS);
-
-    tri_set_uv_coordinates(&app->tri, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f, 1.0f);
-    tri_draw_triangle(&app->tri, 
-        app->cubeTextureNoise, 255, 
-        x1, y1, x2, y2, x3, y3);
-}
-
-
 static void redraw_callback(void* pApp, Window* win) {
 
     Application* app = (Application*) pApp;
     Canvas* canvas = app->canvas;
 
+    f32 ratio = (f32) canvas->width / (f32) canvas->height;
+
     canvas_clear(canvas, 182);
+    
+    tribuf_flush(app->tribuffer);
 
-    canvas_draw_bitmap_fast(canvas, app->cubeTextureNoise, 0, 0);
+    transf_load_identity(&app->transf);
+    transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 1.0f));
+    transf_set_perspective_projection(&app->transf, 70.0f, ratio, 0.05f, 100.0f);
+    transf_set_view(&app->transf, vec3(0, 0, -2.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
-    draw_spinning_triangle(app, canvas);
+    r3d_draw_triangle(app->tribuffer, &app->transf, app->cubeTextureNoise, 0,
+        vec3(-0.5f, -0.5f, 0.0f),
+        vec3(0.5f, -0.5f, 0.0f),
+        vec3(0.0f, 0.5f, 0.0f),
+        vec2(0, 0), vec2(1.0f, 0.5f), vec2(0.5f, 1.0f),
+        vec3(0, 0, -1));
+
+    tribuf_draw(app->tribuffer, &app->rasterizer);
 
     canvas_update_window_content(canvas, win);
 }
@@ -92,6 +82,18 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
+    app->tribuffer = new_triangle_buffer(2048, err);
+    if (app->tribuffer == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->transf = create_transformations_manager();
+    app->rasterizer = create_triangle_rasterizer(app->canvas);
+
+    app->r3d = create_renderer_3D(app->tribuffer, &app->rasterizer);
+
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(
         128, 128, -1.33f, 1.33f, 1, 
         vec3(1.0f, 0.67f, 0.33f), 12345, err);
@@ -101,8 +103,6 @@ Application* new_application(Window* win, Error* err) {
         dispose_application(app);
         return NULL;
     }
-
-    app->tri = create_triangle_rasterizer(app->canvas);
 
     app->testAngle = 0.0f;
 
@@ -117,6 +117,8 @@ void dispose_application(Application* app) {
 
     dispose_canvas(app->canvas);
     dispose_bitmap(app->cubeTextureNoise);
+    dispose_triangle_buffer(app->tribuffer);
+
     m_free(app);
 }
 

@@ -64,21 +64,15 @@ Triangle create_triangle(
 
 
 bool create_triangle_3D(
-    Bitmap* texture, u8 color,
-    Transformations* transf,
+    Bitmap* texture, u8 color, u8 tint,
     Vector4 A, Vector4 B, Vector4 C,
     Vector4 tA, Vector4 tB, Vector4 tC,
-    Vector4 normal,
     Triangle* dest) {
 
     const f32 NEAR = 0.025f;
 
     Vector4 pA, pB, pC;
     f32 depth;
-    
-    A = transf_apply_to_vector(transf, A);
-    B = transf_apply_to_vector(transf, B);
-    C = transf_apply_to_vector(transf, C);
 
     if (A.z < NEAR || B.z < NEAR || C.z < NEAR)
         return false;
@@ -92,7 +86,7 @@ bool create_triangle_3D(
     *dest = create_triangle(
         pA.x, pA.y, pB.x, pB.y, pC.x, pC.y,
         tA.x, tA.y, tB.x, tB.y, tC.x, tC.y,
-        texture, color, 0, depth);
+        texture, color, tint, depth);
 
     return true;
 }
@@ -141,16 +135,10 @@ void tribuf_flush(TriangleBuffer* buf) {
 
 bool tribuf_push_triangle(TriangleBuffer* buf, Triangle triangle) {
 
-    if (buf->count == buf->maxSize) {
-
-        // Temporary warning
-        // TODO: Remove or replace with better warning handling?
-        printf("WARNING: Triangle buffer overflow!\n");
+    if (buf->count == buf->maxSize) 
         return false;
-    }
-
+    
     buf->triangles[buf->count ++] = triangle;
-
     return true;
 }
 
