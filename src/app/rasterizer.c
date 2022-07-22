@@ -1,4 +1,4 @@
-#include "triangle.h"
+#include "rasterizer.h"
 #include "mathext.h"
 
 #include <stdio.h>

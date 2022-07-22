@@ -6,7 +6,7 @@
 
 
 #include "bitmap.h"
-#include "triangle.h"
+#include "rasterizer.h"
 
 
 typedef struct {

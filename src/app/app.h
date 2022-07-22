@@ -5,7 +5,7 @@
 #include "core/window.h"
 
 #include "canvas.h"
-#include "triangle.h"
+#include "rasterizer.h"
 
 
 typedef struct {
