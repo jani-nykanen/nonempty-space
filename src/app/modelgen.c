@@ -26,7 +26,7 @@ static void add_vector3(Vector4 v, f32* arr, u32* p) {
 }
 
 
-static void add_vector3_repeat(Vector4 v, f32* arr, u32*p, i32 repeat) {
+static void add_vector3_repeat(Vector4 v, f32* arr, u32* p, i32 repeat) {
 
     i32 i;
 
@@ -142,7 +142,7 @@ static void add_cube_general(ModelGenerator* mgen,
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             forward, up, 
-            vec3(-1.0f, 0, 0.0f),
+            vec3(1.0f, 0, 0.0f),
             subdivide);
     }
 
@@ -152,7 +152,7 @@ static void add_cube_general(ModelGenerator* mgen,
         add_plane(mgen, 
             vec3(x + sx/2, y - sy/2, z - sz/2), 
             forward, up, 
-            vec3(1.0f, 0, 0.0f),
+            vec3(-1.0f, 0, 0.0f),
             subdivide);
     }
 
@@ -162,7 +162,7 @@ static void add_cube_general(ModelGenerator* mgen,
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             left, forward, 
-            vec3(0.0f, 1, 0.0f),
+            vec3(0.0f, 1.0f, 0.0f),
             subdivide);
     }
 

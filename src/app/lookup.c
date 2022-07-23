@@ -25,7 +25,7 @@ static void generate_tint_tables(LookUpTables* table) {
 
         r2 = r1;
         b2 = b1;
-        g2 = b1;
+        g2 = g1;
 
         for (j = 0; j < TINT_MAX; ++ j) {
 

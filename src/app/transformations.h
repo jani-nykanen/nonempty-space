@@ -13,11 +13,13 @@ typedef struct {
     Matrix4 model;
     Matrix4 view;
     Matrix4 projection;
+    Matrix4 rotation;
     Matrix4 product;
 
     bool productComputed;
 
     Matrix4 modelStack [MODEL_STACK_SIZE];
+    Matrix4 rotationStack [MODEL_STACK_SIZE];
     u32 stackPointer;
 
 } Transformations;
@@ -41,6 +43,7 @@ void transf_set_view(Transformations* transf,
     Vector4 eye, Vector4 lookAt, Vector4 up);
 
 Vector4 transf_apply_to_vector(Transformations* transf, Vector4 vec);
+Vector4 transf_apply_rotation_to_vector(Transformations* transf, Vector4 vec);
 
 
 #endif // NONEMPTY_SPACE_APP_TRANSFORMATIONS_H

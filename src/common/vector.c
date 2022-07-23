@@ -43,6 +43,12 @@ Vector4 vec4_cross(Vector4 u, Vector4 v) {
 }
 
 
+f32 vec4_dot(Vector4 u, Vector4 v) {
+
+    return u.x*v.x + u.y*v.y + u.z*v.z + u.w*v.w;
+}
+
+
 f32 vec4_length(Vector4 v) {
 
     return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w);

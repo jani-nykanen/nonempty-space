@@ -22,6 +22,8 @@ Vector4 vec4(f32 x, f32 y, f32 z, f32 w);
 Vector4 vec4_zero();
 
 Vector4 vec4_cross(Vector4 u, Vector4 v);
+f32 vec4_dot(Vector4 u, Vector4 v);
+
 f32 vec4_length(Vector4 v);
 Vector4 vec4_normalize(Vector4 v, bool forceUnit);
 f32 vec4_distance(Vector4 a, Vector4 b);

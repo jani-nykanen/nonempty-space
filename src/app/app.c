@@ -50,6 +50,9 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -3.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
+    r3d_toggle_lighting(&app->r3d, true);
+    r3d_set_lighting_properties(&app->r3d, vec3(0, 0, 1.0f), 0.5f, LIGHT_DARK);
+
     r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->cubeTextureNoise, 255);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);

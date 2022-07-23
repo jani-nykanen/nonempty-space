@@ -356,8 +356,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
     // Bottom
     draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
-
+/*
     canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
     canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
     canvas_draw_line(tri->canvas, x1, y1, x3, y3, 0);
+    */
 }
