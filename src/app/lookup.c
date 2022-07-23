@@ -1,6 +1,8 @@
 #include "lookup.h"
 #include "mathext.h"
 
+#include <stdio.h>
+
 
 static void generate_tint_tables(LookUpTables* table) {
 
@@ -27,11 +29,11 @@ static void generate_tint_tables(LookUpTables* table) {
 
         for (j = 0; j < TINT_MAX; ++ j) {
 
-            table->tintBlack[j][i] = r1 | g1 | b1;
-            table->tintWhite[j][i] = r2 | g2 | b2;
+            table->tintBlack[j][i] = (r1 << 5) | (g1 << 2) | b1;
+            table->tintWhite[j][i] = (r2 << 5) | (g2 << 2) | b2;
 
             if (j == TINT_MAX-1)
-                break;;
+                break;
 
             if (b1 > 0 && j % 2 == 1) 
                 -- b1;
@@ -41,7 +43,7 @@ static void generate_tint_tables(LookUpTables* table) {
                 -- g1;
 
             if (b2 < 3 && j % 2 == 1) 
-                ++ b1;
+                ++ b2;
             if (r2 < 7)
                 ++ r2;
             if (g2 < 7)

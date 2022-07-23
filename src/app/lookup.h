@@ -10,9 +10,9 @@
 
 typedef struct {
 
-    u8 tintBlack [TINT_MAX] [256];
-    u8 tintWhite [TINT_MAX] [256];
-    u8 dither [TINT_MAX*2] [2];
+    u8 tintBlack [TINT_MAX]   [256];
+    u8 tintWhite [TINT_MAX]   [256];
+    u8 dither    [TINT_MAX*2] [2];
 
 } LookUpTables;
 

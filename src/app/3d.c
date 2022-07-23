@@ -19,7 +19,7 @@ Renderer3D create_renderer_3D(TriangleBuffer* buffer) {
 
 void r3d_draw_triangle(Renderer3D* r3d,
     Transformations* transf,
-    Bitmap* texture, u8 color,
+    Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C, 
     Vector4 tA, Vector4 tB, Vector4 tC,
     Vector4 normal) {
@@ -30,7 +30,7 @@ void r3d_draw_triangle(Renderer3D* r3d,
     B = transf_apply_to_vector(transf, B);
     C = transf_apply_to_vector(transf, C);
 
-    if (!create_triangle_3D(texture, color, 0, A, B, C, tA, tB, tC, &t)) {
+    if (!create_triangle_3D(texture, color, tint, A, B, C, tA, tB, tC, &t)) {
 
         return;
     }
@@ -66,7 +66,9 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
         
         // TODO: Get normal
 
-        r3d_draw_triangle(r3d, transf, texture, color, A, B, C, tA, tB, tC, 
+        r3d_draw_triangle(r3d, transf, 
+            texture, color, 0,
+            A, B, C, tA, tB, tC, 
             vec4_zero());
     }
 }

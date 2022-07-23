@@ -185,6 +185,30 @@ static void ppfunc_textured_tint_black(TriangleRasterizer* rasterizer,
 }
 
 
+// TODO: A lot of repeating code, write a macro or something
+static void ppfunc_textured_tint_white(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    i32 tx, ty;
+
+    fpmat2_multiply_vector(
+                rasterizer->uvTransform,
+                FIXED_POINT_PRECISION, 
+                x - rasterizer->uvtx, 
+                y - rasterizer->uvty,
+                &tx, &ty);
+
+    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
+    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+
+    //  TODO: Replace x % 2 == y % 2 with bitwise operators, if possible!
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
+        rasterizer->lookup->tintWhite[
+            rasterizer->lookup->dither[hue][x % 2 == y % 2]
+        ] [bmp->pixels[ty * bmp->width + tx]];
+}
+
+
 static void ppfunc_colored(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
@@ -278,7 +302,7 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     // All the points in the same line
     if ((y1 == y2 && y1 == y3))
         return; 
-    
+
     if (texture != NULL) {
 
         compute_uv_transform(tri, texture, x1, y1, x2, y2, x3, y3);
@@ -289,6 +313,11 @@ void tri_draw_triangle(TriangleRasterizer* tri,
             hue *= -1;
             hue = min_i32(hue, (TINT_MAX-1) * 2);
             ppfunc = ppfunc_textured_tint_black;
+        }
+        else if (hue > 0) {
+
+            hue = min_i32(hue, (TINT_MAX-1) * 2);
+            ppfunc = ppfunc_textured_tint_white;
         }
     }
     else {
@@ -324,9 +353,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     }
     
     // Top
-    draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, 0, ppfunc);
+    draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
     // Bottom
-    draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, 0, ppfunc);
+    draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
 
     canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
     canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
