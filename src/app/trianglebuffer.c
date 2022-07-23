@@ -8,7 +8,7 @@
 
 static i32 compare_triangles(const void* a, const void* b) {
 
-    return ((Triangle*)a)->depth > ((Triangle*)b)->depth ? 1 : -1;
+    return ((Triangle*)a)->depth > ((Triangle*)b)->depth ? -1 : 1;
 }
 
 

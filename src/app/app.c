@@ -30,7 +30,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
 
-    app->testAngle = fmodf(app->testAngle - 0.05f * timeStep, M_PI * 2.0f);
+    app->testAngle = fmodf(app->testAngle - 0.025f * timeStep, M_PI * 2.0f);
 }
 
 
@@ -46,9 +46,9 @@ static void redraw_callback(void* pApp, Window* win) {
     tribuf_flush(app->tribuffer);
 
     transf_load_identity(&app->transf);
-    transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 1.0f));
-    transf_set_perspective_projection(&app->transf, 70.0f, ratio, 0.05f, 100.0f);
-    transf_set_view(&app->transf, vec3(0, 0, -2.5f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
+    transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
+    transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
+    transf_set_view(&app->transf, vec3(0, 0, -3.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 /*
     r3d_draw_triangle(&app->r3d, &app->transf, app->cubeTextureNoise, 0,
         vec3(-0.5f, -0.5f, 0.0f),
@@ -103,7 +103,7 @@ Application* new_application(Window* win, Error* err) {
     app->r3d = create_renderer_3D(app->tribuffer);
 
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(
-        128, 128, -1.33f, 1.33f, 1, 
+        64, 64, -1.33f, 1.33f, 1, 
         vec3(1.0f, 0.67f, 0.33f), 12345, err);
     if (app->cubeTextureNoise == NULL) {
 

@@ -103,6 +103,7 @@ static void add_cube_general(ModelGenerator* mgen,
 
     Vector4 left = vec3(sx, 0.0f, 0.0f);
     Vector4 up = vec3(0.0f, sy, 0.0f);
+    Vector4 forward = vec3(0.0f, 0.0f, sz);
 
     // Front wall
     if (wallData[FRONT]) {
@@ -119,6 +120,39 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             left, up, subdivide);
     }
+
+     // Left wall
+    if (wallData[LEFT]) {
+
+        add_plane(mgen, 
+            vec3(x - sx/2, y - sy/2, z - sz/2), 
+            forward, up, subdivide);
+    }
+
+    // Right wall
+    if (wallData[RIGHT]) {
+
+        add_plane(mgen, 
+            vec3(x + sx/2, y - sy/2, z - sz/2), 
+            forward, up, subdivide);
+    }
+
+    // Top wall
+    if (wallData[TOP]) {
+
+        add_plane(mgen, 
+            vec3(x - sx/2, y - sy/2, z - sz/2), 
+            left, forward, subdivide);
+    }
+
+    // Bottom wall
+    if (wallData[BOTTOM]) {
+
+        add_plane(mgen, 
+            vec3(x - sx/2, y + sy/2, z - sz/2), 
+            left, forward, subdivide);
+    }
+
 }
 
 
