@@ -8,16 +8,18 @@
 #include "rasterizer.h"
 #include "3d.h"
 #include "modelgen.h"
+#include "lookup.h"
 
 
 typedef struct {
-
+    
     Canvas* canvas;
     TriangleRasterizer rasterizer;
     TriangleBuffer* tribuffer;
     Transformations transf;
     Renderer3D r3d;
     ModelGenerator* mgen;
+    LookUpTables lookup;
 
     Bitmap* cubeTextureNoise;
     Mesh* meshCube;

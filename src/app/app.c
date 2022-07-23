@@ -49,14 +49,7 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -3.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
-/*
-    r3d_draw_triangle(&app->r3d, &app->transf, app->cubeTextureNoise, 0,
-        vec3(-0.5f, -0.5f, 0.0f),
-        vec3(0.5f, -0.5f, 0.0f),
-        vec3(0.0f, 0.5f, 0.0f),
-        vec2(0, 0), vec2(1.0f, 0.5f), vec2(0.5f, 1.0f),
-        vec3(0, 0, -1));
-*/
+
     r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->cubeTextureNoise, 0);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);
@@ -75,6 +68,8 @@ Application* new_application(Window* win, Error* err) {
         *err = memory_error();
         return NULL;
     }
+
+    app->lookup = generate_lookup_tables();
 
     window_get_canvas_size(win, &w, &h);
     app->canvas = new_canvas(w, h, err);
@@ -99,7 +94,7 @@ Application* new_application(Window* win, Error* err) {
     }
 
     app->transf = create_transformations_manager();
-    app->rasterizer = create_triangle_rasterizer(app->canvas);
+    app->rasterizer = create_triangle_rasterizer(app->canvas, &app->lookup);
     app->r3d = create_renderer_3D(app->tribuffer);
 
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(

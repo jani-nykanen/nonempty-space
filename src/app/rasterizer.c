@@ -199,11 +199,12 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
 } 
 
 
-TriangleRasterizer create_triangle_rasterizer(Canvas* canvas) {
+TriangleRasterizer create_triangle_rasterizer(Canvas* canvas, LookUpTables* lookup) {
 
     TriangleRasterizer tri;
 
     tri.canvas = canvas;
+    tri.lookup = lookup;
 
     return tri;
 }

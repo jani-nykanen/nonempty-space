@@ -26,6 +26,17 @@ static void add_vector3(Vector4 v, f32* arr, u32* p) {
 }
 
 
+static void add_vector3_repeat(Vector4 v, f32* arr, u32*p, i32 repeat) {
+
+    i32 i;
+
+    for (i = 0; i < repeat; ++ i) {
+
+        add_vector3(v, arr, p);
+    }
+}
+
+
 static void add_values_2(f32 x, f32 y, f32* arr, u32* p) {
 
     i32 i = (*p);
@@ -38,8 +49,8 @@ static void add_values_2(f32 x, f32 y, f32* arr, u32* p) {
 
 
 static void add_plane(ModelGenerator* mgen, 
-    Vector4 start, Vector4 dirx, Vector4 diry,
-    i32 subdivide) {
+    Vector4 start, Vector4 dirx, Vector4 diry, 
+    Vector4 normal, i32 subdivide) {
 
     i32 i, j;
     Vector4 A, B, C, D;
@@ -85,7 +96,7 @@ static void add_plane(ModelGenerator* mgen,
             add_values_2(tx, ty + tstep, mgen->uvBuffer, &mgen->uvCount);
             add_values_2(tx, ty, mgen->uvBuffer, &mgen->uvCount);
 
-            // TODO: Compute normals
+            add_vector3_repeat(normal, mgen->normalBuffer, &mgen->normalCount, 6);
 
             for (k = mgen->indexCount; k < mgen->indexCount + 6; ++ k) {
 
@@ -110,7 +121,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z + sz/2), 
-            left, up, subdivide);
+            left, up,
+            vec3(0, 0, -1.0f),
+            subdivide);
     }
 
     // Back wall
@@ -118,7 +131,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z - sz/2), 
-            left, up, subdivide);
+            left, up, 
+            vec3(0, 0, 1.0f),
+            subdivide);
     }
 
      // Left wall
@@ -126,7 +141,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z - sz/2), 
-            forward, up, subdivide);
+            forward, up, 
+            vec3(-1.0f, 0, 0.0f),
+            subdivide);
     }
 
     // Right wall
@@ -134,7 +151,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x + sx/2, y - sy/2, z - sz/2), 
-            forward, up, subdivide);
+            forward, up, 
+            vec3(1.0f, 0, 0.0f),
+            subdivide);
     }
 
     // Top wall
@@ -142,7 +161,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z - sz/2), 
-            left, forward, subdivide);
+            left, forward, 
+            vec3(0.0f, 1, 0.0f),
+            subdivide);
     }
 
     // Bottom wall
@@ -150,7 +171,9 @@ static void add_cube_general(ModelGenerator* mgen,
 
         add_plane(mgen, 
             vec3(x - sx/2, y + sy/2, z - sz/2), 
-            left, forward, subdivide);
+            left, forward, 
+            vec3(0.0f, -1.0f, 0.0f),
+            subdivide);
     }
 
 }
@@ -230,13 +253,6 @@ Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err) {
     if (out == NULL) {
 
         return NULL;
-    }
-
-
-    i32 i;
-    for (i = 0; i < mgen->vertexCount/3; ++ i) {
-
-        printf("%f %f %f\n", mgen->vertexBuffer[i*3], mgen->vertexBuffer[i*3 +1], mgen->vertexBuffer[i*3 +2]);
     }
 
     mgen->vertexCount = 0;
