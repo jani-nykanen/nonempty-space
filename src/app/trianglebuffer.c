@@ -64,7 +64,7 @@ Triangle create_triangle(
 
 
 bool create_triangle_3D(
-    Bitmap* texture, u8 color, u8 tint,
+    Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C,
     Vector4 tA, Vector4 tB, Vector4 tC,
     Triangle* dest) {
@@ -167,7 +167,7 @@ void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri) {
         x2 = (i32) (t.x2 * w); y2 = (i32) (t.y2 * h);
         x3 = (i32) (t.x3 * w); y3 = (i32) (t.y3 * h);
 
-        tri_draw_triangle(tri, t.texture, t.color, x1, y1, x2, y2, x3, y3);
+        tri_draw_triangle(tri, t.texture, t.color, t.tint, x1, y1, x2, y2, x3, y3);
     }
 
     tribuf_flush(buf);

@@ -8,6 +8,10 @@
 #define FIXED_POINT_PRECISION 12
 
 
+typedef void (PixelFunction)(TriangleRasterizer* canvas, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y);
+
+
 typedef i32 PointTriplet[6];
 
 
@@ -139,13 +143,62 @@ static bool is_in_visible_area(Rectangle area,
 }
 
 
-static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
+static void ppfunc_textured(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    i32 tx, ty;
+
+    fpmat2_multiply_vector(
+                rasterizer->uvTransform,
+                FIXED_POINT_PRECISION, 
+                x - rasterizer->uvtx, 
+                y - rasterizer->uvty,
+                &tx, &ty);
+
+    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
+    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
+}
+
+
+static void ppfunc_textured_tint_black(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    i32 tx, ty;
+
+    fpmat2_multiply_vector(
+                rasterizer->uvTransform,
+                FIXED_POINT_PRECISION, 
+                x - rasterizer->uvtx, 
+                y - rasterizer->uvty,
+                &tx, &ty);
+
+    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
+    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+
+    //  TODO: Replace x % 2 == y % 2 with bitwise operators, if possible!
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
+        rasterizer->lookup->tintBlack[
+            rasterizer->lookup->dither[hue][x % 2 == y % 2]
+        ] [bmp->pixels[ty * bmp->width + tx]];
+}
+
+
+static void ppfunc_colored(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = color;
+}
+
+
+static void draw_triangle_half(TriangleRasterizer* rasterizer, Bitmap* bmp,
     i32 startx, i32 endx, i32 starty, i32 endy, i32 k1, i32 k2,
-    u8 color) {
+    u8 color, i32 hue, PixelFunction ppfunc) {
 
     // TODO: Implement clipping with the clipping area
 
-    Canvas* canvas = tri->canvas;
+    Canvas* canvas = rasterizer->canvas;
 
     i32 diry;
     i32 x, y;
@@ -155,12 +208,7 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
 
     i32 minx, maxx;
 
-    i32 tx, ty;
-
     if (starty == endy) return;
-
-    // TEMP
-    if (bmp == NULL) return;
 
     diry = starty < endy ? 1 : -1; 
 
@@ -183,17 +231,7 @@ static void draw_triangle_half(TriangleRasterizer* tri, Bitmap* bmp,
 
         for (x = minx; x <= maxx; ++ x) {
 
-            fpmat2_multiply_vector(
-                tri->uvTransform,
-                FIXED_POINT_PRECISION, 
-                x - tri->uvtx, 
-                y - tri->uvty,
-                &tx, &ty);
-
-            tx = neg_mod_i32(tx + tri->uvx, bmp->width);
-            ty = neg_mod_i32(ty + tri->uvy, bmp->height);
-
-            canvas->pixels[y * canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
+            ppfunc(rasterizer, bmp, color, hue, x, y);
         }
     }
 } 
@@ -223,7 +261,7 @@ void tri_set_uv_coordinates(TriangleRasterizer* tri,
 
 
 void tri_draw_triangle(TriangleRasterizer* tri, 
-    Bitmap* texture, u8 color,
+    Bitmap* texture, u8 color, i32 hue,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
     i32 k1 = 0;
@@ -231,17 +269,35 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     i32 k3 = 0;
     i32 midx;
 
+    PixelFunction* ppfunc;
+
     // Outside the render area
     if (!is_in_visible_area(tri->canvas->clipArea, x1, y1, x2, y2, x3, y3))
         return;
 
     // All the points in the same line
     if ((y1 == y2 && y1 == y3))
-        return;
+        return; 
     
     if (texture != NULL) {
 
         compute_uv_transform(tri, texture, x1, y1, x2, y2, x3, y3);
+        ppfunc = ppfunc_textured;
+
+        if (hue < 0) {
+
+            hue *= -1;
+            hue = min_i32(hue, (TINT_MAX-1) * 2);
+            ppfunc = ppfunc_textured_tint_black;
+        }
+    }
+    else {
+
+        ppfunc = ppfunc_colored;
+        if (hue < 0) {
+
+            // TODO: Tinting for non-textured triangles!
+        }
     }
 
     order_points(x1, y1, x2, y2, x3, y3,
@@ -268,9 +324,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     }
     
     // Top
-    draw_triangle_half(tri, texture, x2, (i32) midx, y2, y1, k1, k2, color);
+    draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, 0, ppfunc);
     // Bottom
-    draw_triangle_half(tri, texture, x2, (i32) midx, y2, y3, k1, k3, color);
+    draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, 0, ppfunc);
 
     canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
     canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);

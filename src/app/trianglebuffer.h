@@ -35,7 +35,7 @@ Triangle create_triangle(
     Bitmap* texture, u8 color,
     i32 tint, f32 depth);
 bool create_triangle_3D(
-    Bitmap* texture, u8 color, u8 tint,
+    Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C,
     Vector4 tA, Vector4 tB, Vector4 tC,
     Triangle* dest);
