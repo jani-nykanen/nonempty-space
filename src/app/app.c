@@ -48,14 +48,16 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_load_identity(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 1.0f));
     transf_set_perspective_projection(&app->transf, 70.0f, ratio, 0.05f, 100.0f);
-    transf_set_view(&app->transf, vec3(0, 0, -2.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
-
-    r3d_draw_triangle(app->tribuffer, &app->transf, app->cubeTextureNoise, 0,
+    transf_set_view(&app->transf, vec3(0, 0, -2.5f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
+/*
+    r3d_draw_triangle(&app->r3d, &app->transf, app->cubeTextureNoise, 0,
         vec3(-0.5f, -0.5f, 0.0f),
         vec3(0.5f, -0.5f, 0.0f),
         vec3(0.0f, 0.5f, 0.0f),
         vec2(0, 0), vec2(1.0f, 0.5f), vec2(0.5f, 1.0f),
         vec3(0, 0, -1));
+*/
+    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->cubeTextureNoise, 0);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);
 
@@ -89,10 +91,16 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
+    app->mgen = new_model_generator(2048, err);
+    if (app->mgen == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
     app->transf = create_transformations_manager();
     app->rasterizer = create_triangle_rasterizer(app->canvas);
-
-    app->r3d = create_renderer_3D(app->tribuffer, &app->rasterizer);
+    app->r3d = create_renderer_3D(app->tribuffer);
 
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(
         128, 128, -1.33f, 1.33f, 1, 
@@ -100,6 +108,13 @@ Application* new_application(Window* win, Error* err) {
     if (app->cubeTextureNoise == NULL) {
 
         *err = memory_error();
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->meshCube = mgen_generate_unit_cube(app->mgen, 2, err);
+    if (app->meshCube == NULL) {
+
         dispose_application(app);
         return NULL;
     }
@@ -116,8 +131,11 @@ void dispose_application(Application* app) {
         return;
 
     dispose_canvas(app->canvas);
-    dispose_bitmap(app->cubeTextureNoise);
     dispose_triangle_buffer(app->tribuffer);
+    dispose_model_generator(app->mgen);
+
+    dispose_bitmap(app->cubeTextureNoise);
+    dispose_mesh(app->meshCube);
 
     m_free(app);
 }

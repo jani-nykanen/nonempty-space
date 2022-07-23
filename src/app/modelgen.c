@@ -14,23 +14,51 @@
 #define TOP 5
 
 
+static void add_vector3(Vector4 v, f32* arr, u32* p) {
+
+    i32 i = (*p);
+
+    arr[i] = v.x;
+    arr[i + 1] = v.y;
+    arr[i + 2] = v.z;
+
+    *p += 3;
+}
+
+
+static void add_values_2(f32 x, f32 y, f32* arr, u32* p) {
+
+    i32 i = (*p);
+
+    arr[i] = x;
+    arr[i + 1] = y;
+
+    *p += 2;
+}
+
 
 static void add_plane(ModelGenerator* mgen, 
     Vector4 start, Vector4 dirx, Vector4 diry,
-    f32 ushift, f32 vshift, f32 uwidth, f32 vwidth,
     i32 subdivide) {
 
     i32 i, j;
     Vector4 A, B, C, D;
 
-    f32 step = 1.0f / subdivide;
+    f32 step = 1.0f / ((f32) subdivide);
 
     Vector4 scaledDirX = vec4_scalar_multiply(dirx, step);
     Vector4 scaledDirY = vec4_scalar_multiply(diry, step);
 
-    for (j = 0; j < subdivide; ++ j) {
+    f32 tstep = 1.0f / ((f32) (subdivide));
+    f32 tx = 0.0f;
+    f32 ty = 0.0f;
 
-        for (i = 0; i < subdivide; ++ i) {
+    u32 k;
+
+    for (j = 0; j < subdivide; ++ j, ty += tstep) {
+
+        tx = 0.0f;
+        for (i = 0; i < subdivide; ++ i, tx += tstep) {
 
             A = vec4_add(start,
                     vec4_add(
@@ -38,9 +66,32 @@ static void add_plane(ModelGenerator* mgen,
                         vec4_scalar_multiply(diry, j*step)
                     ));
             B = vec4_add(A, scaledDirX);
-            C = vec4_add(A, scaledDirY);
-            D = vec4_add(A, vec4_add(scaledDirX, scaledDirY));
+            C = vec4_add(A, vec4_add(scaledDirX, scaledDirY));
+            D = vec4_add(A, scaledDirY);
+            
+            add_vector3(A, mgen->vertexBuffer, &mgen->vertexCount);
+            add_vector3(B, mgen->vertexBuffer, &mgen->vertexCount);
+            add_vector3(C, mgen->vertexBuffer, &mgen->vertexCount);
 
+            add_vector3(C, mgen->vertexBuffer, &mgen->vertexCount);
+            add_vector3(D, mgen->vertexBuffer, &mgen->vertexCount);
+            add_vector3(A, mgen->vertexBuffer, &mgen->vertexCount);
+
+            add_values_2(tx, ty, mgen->uvBuffer, &mgen->uvCount);
+            add_values_2(tx + tstep, ty, mgen->uvBuffer, &mgen->uvCount);
+            add_values_2(tx + tstep, ty + tstep, mgen->uvBuffer, &mgen->uvCount);
+
+            add_values_2(tx + step, ty + tstep, mgen->uvBuffer, &mgen->uvCount);
+            add_values_2(tx, ty + tstep, mgen->uvBuffer, &mgen->uvCount);
+            add_values_2(tx, ty, mgen->uvBuffer, &mgen->uvCount);
+
+            // TODO: Compute normals
+
+            for (k = mgen->indexCount; k < mgen->indexCount + 6; ++ k) {
+
+                mgen->indexBuffer[k] = (u16) k;
+            }
+            mgen->indexCount += 6;
         }
     }
 }
@@ -48,25 +99,35 @@ static void add_plane(ModelGenerator* mgen,
 
 static void add_cube_general(ModelGenerator* mgen, 
     f32 x, f32 y, f32 z, f32 sx, f32 sy, f32 sz, i32 subdivide,
-    f32 ushift, f32 vshift, f32 uwidth, f32 vwidth,
     const bool wallData[6]) {
 
-    Vector4 left = vec3(1.0f, 0.0f, 0.0f);
-    Vector4 up = vec3(0.0f, 1.0f, 0.0f);
+    Vector4 left = vec3(sx, 0.0f, 0.0f);
+    Vector4 up = vec3(0.0f, sy, 0.0f);
 
     // Front wall
     if (wallData[FRONT]) {
 
         add_plane(mgen, 
             vec3(x - sx/2, y - sy/2, z + sz/2), 
-            left, up, 
-            ushift, vshift, uwidth, vwidth, 
-            subdivide);
+            left, up, subdivide);
+    }
+
+    // Back wall
+    if (wallData[BACK]) {
+
+        add_plane(mgen, 
+            vec3(x - sx/2, y - sy/2, z - sz/2), 
+            left, up, subdivide);
     }
 }
 
 
 ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
+
+    u32 vertexCount = bufferSize * 3;
+    u32 uvCount = bufferSize * 2;
+    u32 normalCount = bufferSize * 3;
+    u32 indexCount = bufferSize;
 
     ModelGenerator* mgen = (ModelGenerator*) calloc(1, sizeof(ModelGenerator));
     if (mgen == NULL) {
@@ -75,21 +136,21 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
         return NULL;
     }
 
-    mgen->vertexCount = bufferSize * 3;
-    mgen->uvCount = bufferSize * 2;
-    mgen->normalCount = bufferSize * 3;
-    mgen->indexCount = bufferSize;
-
-    if ((mgen->vertexBuffer = (f32*) calloc(mgen->vertexCount, sizeof(f32))) == NULL ||
-        (mgen->uvBuffer = (f32*) calloc(mgen->uvCount, sizeof(f32))) == NULL ||
-        (mgen->normalBuffer = (f32*) calloc(mgen->normalCount, sizeof(f32))) == NULL ||
-        (mgen->indexBuffer = (u16*) calloc(mgen->indexCount, sizeof(u16))) == NULL) {
+    if ((mgen->vertexBuffer = (f32*) calloc(vertexCount, sizeof(f32))) == NULL ||
+        (mgen->uvBuffer = (f32*) calloc(uvCount, sizeof(f32))) == NULL ||
+        (mgen->normalBuffer = (f32*) calloc(normalCount, sizeof(f32))) == NULL ||
+        (mgen->indexBuffer = (u16*) calloc(indexCount, sizeof(u16))) == NULL) {
 
         *err = memory_error();
         dispose_model_generator(mgen);
 
         return NULL;
     }
+
+    mgen->vertexCount = 0;
+    mgen->uvCount = 0;
+    mgen->normalCount = 0;
+    mgen->indexCount = 0;
 
     return mgen;
 }
@@ -114,8 +175,7 @@ Mesh* mgen_generate_unit_cube(ModelGenerator* mgen, i32 subdivide, Error* err) {
     const bool WALLS[] = {true, true, true, true, true, true};
 
     add_cube_general(mgen, 0.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, subdivide,
-        0.5f, 0.5f, 1.0f, 1.0f, WALLS);
+        1.0f, 1.0f, 1.0f, subdivide, WALLS);
 
     return mgen_generate_mesh(mgen, err);
 }
@@ -136,6 +196,13 @@ Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err) {
     if (out == NULL) {
 
         return NULL;
+    }
+
+
+    i32 i;
+    for (i = 0; i < mgen->vertexCount/3; ++ i) {
+
+        printf("%f %f %f\n", mgen->vertexBuffer[i*3], mgen->vertexBuffer[i*3 +1], mgen->vertexBuffer[i*3 +2]);
     }
 
     mgen->vertexCount = 0;

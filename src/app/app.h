@@ -7,17 +7,20 @@
 #include "canvas.h"
 #include "rasterizer.h"
 #include "3d.h"
+#include "modelgen.h"
 
 
 typedef struct {
 
     Canvas* canvas;
-    Bitmap* cubeTextureNoise;
-    
     TriangleRasterizer rasterizer;
     TriangleBuffer* tribuffer;
     Transformations transf;
     Renderer3D r3d;
+    ModelGenerator* mgen;
+
+    Bitmap* cubeTextureNoise;
+    Mesh* meshCube;
 
     f32 testAngle;
 
