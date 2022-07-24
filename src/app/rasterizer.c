@@ -264,9 +264,15 @@ static void draw_triangle_half(TriangleRasterizer* rasterizer, Bitmap* bmp,
 TriangleRasterizer create_triangle_rasterizer(Canvas* canvas, LookUpTables* lookup) {
 
     TriangleRasterizer tri;
+    i32 i;
 
     tri.canvas = canvas;
     tri.lookup = lookup;
+
+    for (i = 0; i < 3; ++ i) {
+
+        tri.outlines[i] = false;
+    }
 
     return tri;
 }
@@ -356,9 +362,20 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
     // Bottom
     draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
-/*
-    canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
-    canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
-    canvas_draw_line(tri->canvas, x1, y1, x3, y3, 0);
-    */
+
+    if (tri->outlines[0])
+        canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
+    if (tri->outlines[1])
+        canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
+    if (tri->outlines[2])
+        canvas_draw_line(tri->canvas, x1, y1, x3, y3, 0);
+    
+}
+
+
+void tri_toggle_outlines(TriangleRasterizer* tri, bool outline1, bool outline2, bool outline3) {
+
+    tri->outlines[0] = outline1;
+    tri->outlines[1] = outline2;
+    tri->outlines[2] = outline3;
 }

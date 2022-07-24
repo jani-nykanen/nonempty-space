@@ -32,6 +32,7 @@ static Vector4 project(Vector4 P) {
 Triangle create_triangle(
     f32 x1, f32 y1, f32 x2, f32 y2, f32 x3, f32 y3,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3,
+    bool outline1, bool outline2, bool outline3,
     Bitmap* texture, u8 color,
     i32 tint, f32 depth) {
 
@@ -54,6 +55,10 @@ Triangle create_triangle(
     t.u3 = u3;
     t.v3 = v3;
 
+    t.outlines[0] = outline1;
+    t.outlines[1] = outline2;
+    t.outlines[2] = outline3;
+
     t.texture = texture;
     t.color = color;
     t.tint = tint;
@@ -67,6 +72,7 @@ bool create_triangle_3D(
     Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C,
     Vector4 tA, Vector4 tB, Vector4 tC,
+    bool outline1, bool outline2, bool outline3,
     Triangle* dest) {
 
     const f32 NEAR = 0.025f;
@@ -86,6 +92,7 @@ bool create_triangle_3D(
     *dest = create_triangle(
         pA.x, pA.y, pB.x, pB.y, pC.x, pC.y,
         tA.x, tA.y, tB.x, tB.y, tC.x, tC.y,
+        outline1, outline2, outline3,
         texture, color, tint, depth);
 
     return true;
@@ -161,6 +168,7 @@ void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri) {
 
         t = buf->triangles[i];
 
+        tri_toggle_outlines(tri, t.outlines[0], t.outlines[1], t.outlines[2]);
         tri_set_uv_coordinates(tri, t.u1, t.v1, t.u2, t.v2, t.u3, t.v3);
 
         x1 = (i32) (t.x1 * w); y1 = (i32) (t.y1 * h);

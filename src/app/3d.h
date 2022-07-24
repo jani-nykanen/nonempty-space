@@ -34,6 +34,7 @@ void r3d_draw_triangle(Renderer3D* r3d,
     Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C, 
     Vector4 tA, Vector4 tB, Vector4 tC,
+    bool outline1, bool outline2, bool outline3,
     Vector4 normal);
 void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, 
     Mesh* mesh, Bitmap* texture, u8 color);

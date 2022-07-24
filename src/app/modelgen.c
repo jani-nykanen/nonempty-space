@@ -48,6 +48,18 @@ static void add_values_2(f32 x, f32 y, f32* arr, u32* p) {
 }
 
 
+static void add_boolean_3(bool b1, bool b2, bool b3, bool* arr, u32* p) {
+
+    i32 i = (*p);
+
+    arr[i] = b1;
+    arr[i + 1] = b2;
+    arr[i + 2] = b3;
+
+    *p += 3;
+}
+
+
 static void add_plane(ModelGenerator* mgen, 
     Vector4 start, Vector4 dirx, Vector4 diry, 
     Vector4 normal, i32 subdivide) {
@@ -97,6 +109,10 @@ static void add_plane(ModelGenerator* mgen,
             add_values_2(tx, ty, mgen->uvBuffer, &mgen->uvCount);
 
             add_vector3_repeat(normal, mgen->normalBuffer, &mgen->normalCount, 6);
+
+            // TEMP
+            add_boolean_3(false, false, false, mgen->outlineBuffer, &mgen->outlineCount);
+            add_boolean_3(false, false, false, mgen->outlineBuffer, &mgen->outlineCount);
 
             for (k = mgen->indexCount; k < mgen->indexCount + 6; ++ k) {
 
@@ -185,6 +201,7 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     u32 uvCount = bufferSize * 2;
     u32 normalCount = bufferSize * 3;
     u32 indexCount = bufferSize;
+    u32 outlineCount = bufferSize;
 
     ModelGenerator* mgen = (ModelGenerator*) calloc(1, sizeof(ModelGenerator));
     if (mgen == NULL) {
@@ -196,7 +213,8 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     if ((mgen->vertexBuffer = (f32*) calloc(vertexCount, sizeof(f32))) == NULL ||
         (mgen->uvBuffer = (f32*) calloc(uvCount, sizeof(f32))) == NULL ||
         (mgen->normalBuffer = (f32*) calloc(normalCount, sizeof(f32))) == NULL ||
-        (mgen->indexBuffer = (u16*) calloc(indexCount, sizeof(u16))) == NULL) {
+        (mgen->indexBuffer = (u16*) calloc(indexCount, sizeof(u16))) == NULL ||
+        (mgen->outlineBuffer = (bool*) calloc(outlineCount, sizeof(u16))) == NULL) {
 
         *err = memory_error();
         dispose_model_generator(mgen);
@@ -208,6 +226,7 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     mgen->uvCount = 0;
     mgen->normalCount = 0;
     mgen->indexCount = 0;
+    mgen->outlineCount = 0;
 
     return mgen;
 }
@@ -244,10 +263,12 @@ Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err) {
         (const f32*) mgen->vertexBuffer,
         (const f32*) mgen->uvBuffer,
         (const f32*) mgen->normalBuffer,
+        (const bool*) mgen->outlineBuffer,
         (const u16*) mgen->indexBuffer,
         mgen->vertexCount,
         mgen->uvCount,
         mgen->normalCount,
+        mgen->outlineCount,
         mgen->indexCount,
         err);
     if (out == NULL) {
