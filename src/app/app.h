@@ -23,6 +23,7 @@ typedef struct {
 
     Bitmap* cubeTextureNoise;
     Mesh* meshCube;
+    Mesh* meshThatOneThing;
 
     f32 testAngle;
 

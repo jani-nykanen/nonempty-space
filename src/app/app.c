@@ -48,12 +48,12 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_load_identity(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
-    transf_set_view(&app->transf, vec3(0, 0, -3.0f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
+    transf_set_view(&app->transf, vec3(0, 0, -2.5f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
     r3d_toggle_lighting(&app->r3d, true);
     r3d_set_lighting_properties(&app->r3d, vec3(0, 0, 1.0f), 0.75f, LIGHT_DARK);
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->cubeTextureNoise, 255);
+    r3d_draw_mesh(&app->r3d, &app->transf, app->meshThatOneThing, app->cubeTextureNoise, 255);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);
 
@@ -101,7 +101,7 @@ Application* new_application(Window* win, Error* err) {
     app->r3d = create_renderer_3D(app->tribuffer);
 
     app->cubeTextureNoise = generate_gaussian_noise_bitmap(
-        64, 64, -1.33f, 1.33f, 1, 
+        32, 32, -1.33f, 1.33f, 1, 
         vec3(1.0f, 0.67f, 0.33f), 12345, err);
     if (app->cubeTextureNoise == NULL) {
 
@@ -112,6 +112,13 @@ Application* new_application(Window* win, Error* err) {
 
     app->meshCube = mgen_generate_unit_cube(app->mgen, 2, err);
     if (app->meshCube == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->meshThatOneThing = mgen_generate_that_specific_thing(app->mgen, 3, err);
+    if (app->meshThatOneThing == NULL) {
 
         dispose_application(app);
         return NULL;
@@ -134,6 +141,7 @@ void dispose_application(Application* app) {
 
     dispose_bitmap(app->cubeTextureNoise);
     dispose_mesh(app->meshCube);
+    dispose_mesh(app->meshThatOneThing);
 
     m_free(app);
 }
