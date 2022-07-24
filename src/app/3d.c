@@ -5,12 +5,24 @@
 #include <math.h>
 
 
-static i32 compute_hue(Renderer3D* r3d, Vector4 normal) {
+static i32 compute_hue(Renderer3D* r3d, Vector4 normal, f32 isDark) {
 
-    f32 d = clamp_f32((r3d->lightMag *(1.0f + vec4_dot(normal, r3d->lightDir))), 0.0f, 1.0f);
-    f32 light = d; // (1.0f - r3d->lightMag) + r3d->lightMag*d;
+    f32 d, light, hue;
 
-    return (i32) clamp_f32(roundf(light * (TINT_MAX-1) * 2.0f), 0.0f, (TINT_MAX-1) * 2.0f);
+    d = clamp_f32((1.0f + vec4_dot(normal, r3d->lightDir)) / 2.0f, 0.0f, 1.0f);
+    light = (1.0f - r3d->lightMag) + r3d->lightMag*d;
+    if (isDark) {
+
+        light = 1.0f - light;
+    }
+
+    hue = (i32) clamp_f32(roundf(light * (TINT_MAX-1) * 2.0f), 0.0f, (TINT_MAX-1) * 2.0f);
+    if (isDark) {
+
+        hue *= -1;
+    }
+
+    return hue;
 }
 
 
@@ -82,12 +94,7 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
             hue = compute_hue(r3d, 
                 transf_apply_rotation_to_vector(transf, 
                     vec3(mesh->normals[j*3], mesh->normals[j*3 + 1], mesh->normals[j*3 + 2])
-                ));
-
-            if (r3d->lightType == LIGHT_DARK) {
-
-                hue = -((TINT_MAX-1)*2 - hue);
-            }
+                ), r3d->lightType == LIGHT_DARK);
         }
 
         r3d_draw_triangle(r3d, transf, 
