@@ -21,6 +21,8 @@ typedef struct {
     u32 indexCount;
     u32 outlineCount;
 
+    u32 bufferSize;
+
 } ModelGenerator;
 
 

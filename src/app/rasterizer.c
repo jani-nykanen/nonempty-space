@@ -215,6 +215,22 @@ static void ppfunc_colored(TriangleRasterizer* rasterizer,
 }
 
 
+static void ppfunc_colored_tint_black(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x]  = 
+        rasterizer->lookup->tintBlack[rasterizer->lookup->dither[hue][x % 2 == y % 2]] [color];
+}
+
+
+static void ppfunc_colored_tint_white(TriangleRasterizer* rasterizer, 
+    Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
+
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x]  = 
+        rasterizer->lookup->tintWhite[rasterizer->lookup->dither[hue][x % 2 == y % 2]] [color];
+}
+
+
 static void draw_triangle_half(TriangleRasterizer* rasterizer, Bitmap* bmp,
     i32 startx, i32 endx, i32 starty, i32 endy, i32 k1, i32 k2,
     u8 color, i32 hue, PixelFunction ppfunc) {
@@ -294,7 +310,7 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
     // TODO: Make a variable?
-    const u8 OUTLINE_COLOR = 224;
+    const u8 OUTLINE_COLOR = 0;
 
     i32 k1 = 0;
     i32 k2 = 0;
@@ -311,6 +327,7 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     i32 midx;
 
     PixelFunction* ppfunc;
+    i32 originalHue = hue;
 
     // Outside the render area
     if (!is_in_visible_area(tri->canvas->clipArea, x1, y1, x2, y2, x3, y3))
@@ -320,30 +337,31 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     if ((y1 == y2 && y1 == y3))
         return; 
 
+    if (originalHue < 0) {
+
+        hue *= -1;
+    }
+    hue = min_i32(hue, (TINT_MAX-1) * 2);
+
     if (texture != NULL) {
 
         compute_uv_transform(tri, texture, x1, y1, x2, y2, x3, y3);
         ppfunc = ppfunc_textured;
 
-        if (hue < 0) {
-
-            hue *= -1;
-            hue = min_i32(hue, (TINT_MAX-1) * 2);
+        if (originalHue < 0) 
             ppfunc = ppfunc_textured_tint_black;
-        }
-        else if (hue > 0) {
-
-            hue = min_i32(hue, (TINT_MAX-1) * 2);
+        else if (originalHue > 0) 
             ppfunc = ppfunc_textured_tint_white;
-        }
+        
     }
     else {
 
         ppfunc = ppfunc_colored;
-        if (hue < 0) {
 
-            // TODO: Tinting for non-textured triangles!
-        }
+        if (originalHue < 0) 
+            ppfunc = ppfunc_colored_tint_black;
+        else if (originalHue > 0) 
+            ppfunc = ppfunc_colored_tint_white;
     }
 
     order_points(x1, y1, x2, y2, x3, y3,

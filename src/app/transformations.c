@@ -88,8 +88,8 @@ void transf_pop_model(Transformations* transf) {
     if (transf->stackPointer == 0)
         return;
 
-    transf->model = transf->modelStack[transf->stackPointer];
-    transf->rotation = transf->rotationStack[transf->stackPointer];
+    transf->model = transf->modelStack[transf->stackPointer-1];
+    transf->rotation = transf->rotationStack[transf->stackPointer-1];
     transf->productComputed = false;
 
     -- transf->stackPointer;
