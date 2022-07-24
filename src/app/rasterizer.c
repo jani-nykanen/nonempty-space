@@ -23,8 +23,7 @@ static void order_points(
     // to order, we can do this manually. No need for for loop,
     // either! Possibly a small performance boost...
 
-    // TODO: Check if this really works...
-    // TODO 2: Recursion for the other to cases?
+    // TODO: Maybe qsort after all?
 
     if (y1 <= y2 && y1 <= y3) {
 
@@ -294,9 +293,21 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     Bitmap* texture, u8 color, i32 hue,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
+    // TODO: Make a variable?
+    const u8 OUTLINE_COLOR = 224;
+
     i32 k1 = 0;
     i32 k2 = 0;
     i32 k3 = 0;
+
+    // Initialize to get rid of warnings...
+    i32 dx1 = 0;
+    i32 dy1 = 0;
+    i32 dx2 = 0;
+    i32 dy2 = 0;
+    i32 dx3 = 0;
+    i32 dy3 = 0;
+
     i32 midx;
 
     PixelFunction* ppfunc;
@@ -336,39 +347,39 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     }
 
     order_points(x1, y1, x2, y2, x3, y3,
-        &x1, &y1, &x2, &y2, &x3, &y3);
+        &dx1, &dy1, &dx2, &dy2, &dx3, &dy3);
     
-    midx = ((y3 - y2) * (x3 - x1)) << FIXED_POINT_PRECISION;
-    midx /= (y3 - y1);
-    midx = x3 - (midx >> FIXED_POINT_PRECISION);
+    midx = ((dy3 - dy2) * (dx3 - dx1)) << FIXED_POINT_PRECISION;
+    midx /= (dy3 - dy1);
+    midx = dx3 - (midx >> FIXED_POINT_PRECISION);
 
-    if (y1 != y3) {
+    if (dy1 != dy3) {
 
-        k1 = (x3 - x1) << FIXED_POINT_PRECISION;
-        k1 /= (y3 - y1);
+        k1 = (dx3 - dx1) << FIXED_POINT_PRECISION;
+        k1 /= (dy3 - dy1);
     }
-    if (y1 != y2) {
+    if (dy1 != dy2) {
 
-        k2 = (x2 - x1) << FIXED_POINT_PRECISION;
-        k2 /= (y2 - y1);
+        k2 = (dx2 - dx1) << FIXED_POINT_PRECISION;
+        k2 /= (dy2 - dy1);
     }
-    if (y2 != y3) {
+    if (dy2 != dy3) {
 
-        k3 = (x3 - x2) << FIXED_POINT_PRECISION;
-        k3 /= (y3 - y2);
+        k3 = (dx3 - dx2) << FIXED_POINT_PRECISION;
+        k3 /= (dy3 - dy2);
     }
     
     // Top
-    draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
+    draw_triangle_half(tri, texture, dx2, midx, dy2, dy1, k1, k2, color, hue, ppfunc);
     // Bottom
-    draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
+    draw_triangle_half(tri, texture, dx2, midx, dy2, dy3, k1, k3, color, hue, ppfunc);
 
     if (tri->outlines[0])
-        canvas_draw_line(tri->canvas, x1, y1, x2, y2, 0);
+        canvas_draw_line(tri->canvas, x1, y1, x2, y2, OUTLINE_COLOR);
     if (tri->outlines[1])
-        canvas_draw_line(tri->canvas, x2, y2, x3, y3, 0);
+        canvas_draw_line(tri->canvas, x2, y2, x3, y3, OUTLINE_COLOR);
     if (tri->outlines[2])
-        canvas_draw_line(tri->canvas, x1, y1, x3, y3, 0);
+        canvas_draw_line(tri->canvas, x1, y1, x3, y3, OUTLINE_COLOR);
     
 }
 

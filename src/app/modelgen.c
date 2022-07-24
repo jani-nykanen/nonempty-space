@@ -111,8 +111,10 @@ static void add_plane(ModelGenerator* mgen,
             add_vector3_repeat(normal, mgen->normalBuffer, &mgen->normalCount, 6);
 
             // TEMP
-            add_boolean_3(false, false, false, mgen->outlineBuffer, &mgen->outlineCount);
-            add_boolean_3(false, false, false, mgen->outlineBuffer, &mgen->outlineCount);
+            add_boolean_3(j == 0, i == subdivide-1, false, 
+                mgen->outlineBuffer, &mgen->outlineCount);
+            add_boolean_3(j == subdivide-1, i == 0, false, 
+                mgen->outlineBuffer, &mgen->outlineCount);
 
             for (k = mgen->indexCount; k < mgen->indexCount + 6; ++ k) {
 
