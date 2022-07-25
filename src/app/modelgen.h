@@ -13,13 +13,11 @@ typedef struct {
     f32* uvBuffer;
     f32* normalBuffer;
     u16* indexBuffer;
-    bool *outlineBuffer;
 
     u32 vertexCount;
     u32 uvCount;
     u32 normalCount;
     u32 indexCount;
-    u32 outlineCount;
 
     u32 bufferSize;
 

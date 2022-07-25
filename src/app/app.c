@@ -34,27 +34,33 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 }
 
 
-static void draw_outer_model(Application* app) {
+static void draw_outer_model(Application* app, Vector4 lightDir) {
+
+    r3d_toggle_lighting(&app->r3d, true);
+    r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshThatOneThing, app->cubeTextureNoise, 255);
+    r3d_draw_mesh(&app->r3d, &app->transf, app->meshThatOneThing, app->textureNoise1, 255);
 
     transf_pop_model(&app->transf);
 }
 
 
-static void draw_inner_model(Application* app) {
+static void draw_inner_model(Application* app, Vector4 lightDir) {
 
     const f32 MODEL_SCALE = 0.33f;
+
+    r3d_toggle_lighting(&app->r3d, true);
+    r3d_set_lighting_properties(&app->r3d, lightDir, 1.0f, LIGHT_BRIGHT);
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, M_PI/4.0f, vec3(-1.0f, 1.0f, 0.0f));
     transf_rotate(&app->transf, app->testAngle, vec3(-1.0f, 1.0f, 0.0f));
     transf_scale(&app->transf, vec3(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE));
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 255);
+    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->textureNoise2, 255);
 
     transf_pop_model(&app->transf);
 }
@@ -64,7 +70,7 @@ static void redraw_callback(void* pApp, Window* win) {
 
     Application* app = (Application*) pApp;
     Canvas* canvas = app->canvas;
-    Vector4 lightDir;
+    Vector4 lightDir = vec4_normalize(vec3(0.1f, -0.25f, 1.0f), false);
     f32 ratio = (f32) canvas->width / (f32) canvas->height;
 
     canvas_clear(canvas, 83);
@@ -75,13 +81,8 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -2.5f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
-    lightDir = vec4_normalize(vec3(0.1f, -0.25f, 1.0f), false);
-
-    r3d_toggle_lighting(&app->r3d, true);
-    r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
-
-    draw_outer_model(app);
-    draw_inner_model(app);
+    draw_outer_model(app, lightDir);
+    draw_inner_model(app, lightDir);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);
 
@@ -128,10 +129,20 @@ Application* new_application(Window* win, Error* err) {
     app->rasterizer = create_triangle_rasterizer(app->canvas, &app->lookup);
     app->r3d = create_renderer_3D(app->tribuffer);
 
-    app->cubeTextureNoise = generate_gaussian_noise_bitmap(
+    app->textureNoise1 = generate_gaussian_noise_bitmap(
         32, 32, -1.5f, 1.5f, 1, 
         vec3(1.0f, 0.67f, 0.33f), 12345, err);
-    if (app->cubeTextureNoise == NULL) {
+    if (app->textureNoise1 == NULL) {
+
+        *err = memory_error();
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->textureNoise2 = generate_gaussian_noise_bitmap(
+        64, 64, -1.5f, 1.5f, 1, 
+        vec3(0.20f, 0.5f, 0.33f), 54321, err);
+    if (app->textureNoise2 == NULL) {
 
         *err = memory_error();
         dispose_application(app);
@@ -167,7 +178,9 @@ void dispose_application(Application* app) {
     dispose_triangle_buffer(app->tribuffer);
     dispose_model_generator(app->mgen);
 
-    dispose_bitmap(app->cubeTextureNoise);
+    dispose_bitmap(app->textureNoise1);
+    dispose_bitmap(app->textureNoise2);
+
     dispose_mesh(app->meshCube);
     dispose_mesh(app->meshThatOneThing);
 

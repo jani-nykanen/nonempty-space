@@ -50,22 +50,9 @@ static void add_values_2(f32 x, f32 y, f32* arr, u32* p) {
 }
 
 
-static void add_boolean_3(bool b1, bool b2, bool b3, bool* arr, u32* p) {
-
-    i32 i = (*p);
-
-    arr[i] = b1;
-    arr[i + 1] = b2;
-    arr[i + 2] = b3;
-
-    *p += 3;
-}
-
-
 static void add_plane(ModelGenerator* mgen, 
     Vector4 start, Vector4 dirx, Vector4 diry, 
-    Vector4 normal, i32 subdivide,
-    bool addOutlines) {
+    Vector4 normal, i32 subdivide) {
 
     i32 i, j;
     Vector4 A, B, C, D;
@@ -113,14 +100,6 @@ static void add_plane(ModelGenerator* mgen,
 
             add_vector3_repeat(normal, mgen->normalBuffer, &mgen->normalCount, 6);
 
-            if (addOutlines) {
-
-                add_boolean_3(j == 0, i == subdivide-1, false, 
-                    mgen->outlineBuffer, &mgen->outlineCount);
-                add_boolean_3(j == subdivide-1, i == 0, false, 
-                    mgen->outlineBuffer, &mgen->outlineCount);
-            }
-
             for (k = mgen->indexCount; k < mgen->indexCount + 6; ++ k) {
 
                 mgen->indexBuffer[k] = (u16) k;
@@ -133,7 +112,7 @@ static void add_plane(ModelGenerator* mgen,
 
 static void add_cube_general(ModelGenerator* mgen, 
     f32 x, f32 y, f32 z, f32 sx, f32 sy, f32 sz, i32 subdivide,
-    u8 walls, bool addOutlines) {
+    u8 walls) {
 
     Vector4 left = vec3(sx, 0.0f, 0.0f);
     Vector4 up = vec3(0.0f, sy, 0.0f);
@@ -146,7 +125,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y - sy/2, z + sz/2), 
             left, up,
             vec3(0, 0, -1.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
     // Back wall
@@ -156,7 +135,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             left, up, 
             vec3(0, 0, 1.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
      // Left wall
@@ -166,7 +145,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             forward, up, 
             vec3(1.0f, 0, 0.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
     // Right wall
@@ -176,7 +155,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x + sx/2, y - sy/2, z - sz/2), 
             forward, up, 
             vec3(-1.0f, 0, 0.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
     // Top wall
@@ -186,7 +165,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y - sy/2, z - sz/2), 
             left, forward, 
             vec3(0.0f, 1.0f, 0.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
     // Bottom wall
@@ -196,7 +175,7 @@ static void add_cube_general(ModelGenerator* mgen,
             vec3(x - sx/2, y + sy/2, z - sz/2), 
             left, forward, 
             vec3(0.0f, -1.0f, 0.0f),
-            subdivide, addOutlines);
+            subdivide);
     }
 
 }
@@ -208,7 +187,6 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     u32 uvCount = bufferSize * 2;
     u32 normalCount = bufferSize * 3;
     u32 indexCount = bufferSize;
-    u32 outlineCount = bufferSize;
 
     ModelGenerator* mgen = (ModelGenerator*) calloc(1, sizeof(ModelGenerator));
     if (mgen == NULL) {
@@ -220,8 +198,7 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     if ((mgen->vertexBuffer = (f32*) calloc(vertexCount, sizeof(f32))) == NULL ||
         (mgen->uvBuffer = (f32*) calloc(uvCount, sizeof(f32))) == NULL ||
         (mgen->normalBuffer = (f32*) calloc(normalCount, sizeof(f32))) == NULL ||
-        (mgen->indexBuffer = (u16*) calloc(indexCount, sizeof(u16))) == NULL ||
-        (mgen->outlineBuffer = (bool*) calloc(outlineCount, sizeof(u16))) == NULL) {
+        (mgen->indexBuffer = (u16*) calloc(indexCount, sizeof(u16))) == NULL) {
 
         *err = memory_error();
         dispose_model_generator(mgen);
@@ -233,11 +210,8 @@ ModelGenerator* new_model_generator(u32 bufferSize, Error* err) {
     mgen->uvCount = 0;
     mgen->normalCount = 0;
     mgen->indexCount = 0;
-    mgen->outlineCount = 0;
 
     mgen->bufferSize = bufferSize;
-
-    // memset(mgen->outlineBuffer, 0, sizeof(bool) * bufferSize);
 
     return mgen;
 }
@@ -260,7 +234,7 @@ void dispose_model_generator(ModelGenerator* mgen) {
 Mesh* mgen_generate_unit_cube(ModelGenerator* mgen, i32 subdivide, Error* err) {
 
     add_cube_general(mgen, 0.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 1.0f, subdivide, ALL, true);
+        1.0f, 1.0f, 1.0f, subdivide, ALL);
 
     return mgen_generate_mesh(mgen, err);
 }
@@ -321,7 +295,7 @@ Mesh* mgen_generate_that_specific_thing(ModelGenerator* mgen, i32 holeWidth, Err
             start * CORNER_Y[i], 
             start * CORNER_Z[i], 
             unitSize, unitSize, unitSize, 1, 
-            CORNERS[i], false);
+            CORNERS[i]);
     }
 
     // Bars
@@ -335,7 +309,7 @@ Mesh* mgen_generate_that_specific_thing(ModelGenerator* mgen, i32 holeWidth, Err
                 start - (k + 1) * unitSize,
                 start * VBAR_Z[j],
                 unitSize, unitSize, unitSize, 1, 
-                VERTICAL_BAR, false);
+                VERTICAL_BAR);
 
             // Horizontal
             add_cube_general(mgen,
@@ -343,7 +317,7 @@ Mesh* mgen_generate_that_specific_thing(ModelGenerator* mgen, i32 holeWidth, Err
                 start * HBAR_Y[j],
                 start * HBAR_Z[j],
                 unitSize, unitSize, unitSize, 1, 
-                HORIZONTAL_BAR, false);
+                HORIZONTAL_BAR);
 
              // Longitudinal
             add_cube_general(mgen, 
@@ -351,7 +325,7 @@ Mesh* mgen_generate_that_specific_thing(ModelGenerator* mgen, i32 holeWidth, Err
                 start * LBAR_Y[j],
                 start - (k + 1) * unitSize,
                 unitSize, unitSize, unitSize, 1, 
-                LONGITUDINAL_BAR, false);
+                LONGITUDINAL_BAR);
         }
     }
 
@@ -362,23 +336,15 @@ Mesh* mgen_generate_that_specific_thing(ModelGenerator* mgen, i32 holeWidth, Err
 Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err) {
 
     Mesh* out;
-    
-    if (mgen->outlineCount == 0) {
-
-        memset(mgen->outlineBuffer, 0, sizeof(bool) * mgen->bufferSize);
-        mgen->outlineCount = mgen->bufferSize;
-    }
 
     out = new_mesh(
         (const f32*) mgen->vertexBuffer,
         (const f32*) mgen->uvBuffer,
         (const f32*) mgen->normalBuffer,
-        (const bool*) mgen->outlineBuffer,
         (const u16*) mgen->indexBuffer,
         mgen->vertexCount,
         mgen->uvCount,
         mgen->normalCount,
-        mgen->outlineCount,
         mgen->indexCount,
         err);
     if (out == NULL) {
@@ -390,7 +356,6 @@ Mesh* mgen_generate_mesh(ModelGenerator* mgen, Error* err) {
     mgen->uvCount = 0;
     mgen->normalCount = 0;
     mgen->indexCount = 0;
-    mgen->outlineCount = 0;
 
     return out;
 }

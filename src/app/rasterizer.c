@@ -8,6 +8,20 @@
 #define FIXED_POINT_PRECISION 12
 
 
+// Some macros for shorter code in triangle pixel functions.
+// We use macros to minimize function calls in per-pixel operations
+#define TINT(arr, x, y, color) rasterizer->lookup->arr[rasterizer->lookup->dither[hue][x % 2 == y % 2]][color]
+
+#define TEX_COORD(x, y, tx, ty) fpmat2_multiply_vector( \
+                rasterizer->uvTransform, \
+                FIXED_POINT_PRECISION, \
+                x - rasterizer->uvtx, \
+                y - rasterizer->uvty,\
+                &tx, &ty);\
+    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);\
+    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+
+
 typedef void (PixelFunction)(TriangleRasterizer* canvas, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y);
 
@@ -146,16 +160,7 @@ static void ppfunc_textured(TriangleRasterizer* rasterizer,
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
     i32 tx, ty;
-
-    fpmat2_multiply_vector(
-                rasterizer->uvTransform,
-                FIXED_POINT_PRECISION, 
-                x - rasterizer->uvtx, 
-                y - rasterizer->uvty,
-                &tx, &ty);
-
-    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
-    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+    TEX_COORD(x, y, tx, ty)
 
     rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
 }
@@ -165,46 +170,22 @@ static void ppfunc_textured_tint_black(TriangleRasterizer* rasterizer,
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
     i32 tx, ty;
-
-    fpmat2_multiply_vector(
-                rasterizer->uvTransform,
-                FIXED_POINT_PRECISION, 
-                x - rasterizer->uvtx, 
-                y - rasterizer->uvty,
-                &tx, &ty);
-
-    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
-    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
+    TEX_COORD(x, y, tx, ty)
 
     //  TODO: Replace x % 2 == y % 2 with bitwise operators, if possible!
     rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
-        rasterizer->lookup->tintBlack[
-            rasterizer->lookup->dither[hue][x % 2 == y % 2]
-        ] [bmp->pixels[ty * bmp->width + tx]];
+        TINT(tintBlack, x, y, bmp->pixels[ty * bmp->width + tx]);
 }
 
 
-// TODO: A lot of repeating code, write a macro or something
 static void ppfunc_textured_tint_white(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
     i32 tx, ty;
+    TEX_COORD(x, y, tx, ty)
 
-    fpmat2_multiply_vector(
-                rasterizer->uvTransform,
-                FIXED_POINT_PRECISION, 
-                x - rasterizer->uvtx, 
-                y - rasterizer->uvty,
-                &tx, &ty);
-
-    tx = neg_mod_i32(tx + rasterizer->uvx, bmp->width);
-    ty = neg_mod_i32(ty + rasterizer->uvy, bmp->height);
-
-    //  TODO: Replace x % 2 == y % 2 with bitwise operators, if possible!
     rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
-        rasterizer->lookup->tintWhite[
-            rasterizer->lookup->dither[hue][x % 2 == y % 2]
-        ] [bmp->pixels[ty * bmp->width + tx]];
+        TINT(tintWhite, x, y, bmp->pixels[ty * bmp->width + tx]);
 }
 
 
@@ -218,16 +199,14 @@ static void ppfunc_colored(TriangleRasterizer* rasterizer,
 static void ppfunc_colored_tint_black(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x]  = 
-        rasterizer->lookup->tintBlack[rasterizer->lookup->dither[hue][x % 2 == y % 2]] [color];
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = TINT(tintBlack, x, y, color);
 }
 
 
 static void ppfunc_colored_tint_white(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x]  = 
-        rasterizer->lookup->tintWhite[rasterizer->lookup->dither[hue][x % 2 == y % 2]] [color];
+    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = TINT(tintWhite, x, y, color);
 }
 
 
@@ -279,15 +258,9 @@ static void draw_triangle_half(TriangleRasterizer* rasterizer, Bitmap* bmp,
 TriangleRasterizer create_triangle_rasterizer(Canvas* canvas, LookUpTables* lookup) {
 
     TriangleRasterizer tri;
-    i32 i;
 
     tri.canvas = canvas;
     tri.lookup = lookup;
-
-    for (i = 0; i < 3; ++ i) {
-
-        tri.outlines[i] = false;
-    }
 
     return tri;
 }
@@ -309,20 +282,9 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     Bitmap* texture, u8 color, i32 hue,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3) {
 
-    // TODO: Make a variable?
-    const u8 OUTLINE_COLOR = 0;
-
     i32 k1 = 0;
     i32 k2 = 0;
     i32 k3 = 0;
-
-    // Initialize to get rid of warnings...
-    i32 dx1 = 0;
-    i32 dy1 = 0;
-    i32 dx2 = 0;
-    i32 dy2 = 0;
-    i32 dx3 = 0;
-    i32 dy3 = 0;
 
     i32 midx;
 
@@ -365,46 +327,30 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     }
 
     order_points(x1, y1, x2, y2, x3, y3,
-        &dx1, &dy1, &dx2, &dy2, &dx3, &dy3);
+        &x1, &y1, &x2, &y2, &x3, &y3);
     
-    midx = ((dy3 - dy2) * (dx3 - dx1)) << FIXED_POINT_PRECISION;
-    midx /= (dy3 - dy1);
-    midx = dx3 - (midx >> FIXED_POINT_PRECISION);
+    midx = ((y3 - y2) * (x3 - x1)) << FIXED_POINT_PRECISION;
+    midx /= (y3 - y1);
+    midx = x3 - (midx >> FIXED_POINT_PRECISION);
 
-    if (dy1 != dy3) {
+    if (y1 != y3) {
 
-        k1 = (dx3 - dx1) << FIXED_POINT_PRECISION;
-        k1 /= (dy3 - dy1);
+        k1 = (x3 - x1) << FIXED_POINT_PRECISION;
+        k1 /= (y3 - y1);
     }
-    if (dy1 != dy2) {
+    if (y1 != y2) {
 
-        k2 = (dx2 - dx1) << FIXED_POINT_PRECISION;
-        k2 /= (dy2 - dy1);
+        k2 = (x2 - x1) << FIXED_POINT_PRECISION;
+        k2 /= (y2 - y1);
     }
-    if (dy2 != dy3) {
+    if (y2 != y3) {
 
-        k3 = (dx3 - dx2) << FIXED_POINT_PRECISION;
-        k3 /= (dy3 - dy2);
+        k3 = (x3 - x2) << FIXED_POINT_PRECISION;
+        k3 /= (y3 - y2);
     }
     
     // Top
-    draw_triangle_half(tri, texture, dx2, midx, dy2, dy1, k1, k2, color, hue, ppfunc);
+    draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
     // Bottom
-    draw_triangle_half(tri, texture, dx2, midx, dy2, dy3, k1, k3, color, hue, ppfunc);
-
-    if (tri->outlines[0])
-        canvas_draw_line(tri->canvas, x1, y1, x2, y2, OUTLINE_COLOR);
-    if (tri->outlines[1])
-        canvas_draw_line(tri->canvas, x2, y2, x3, y3, OUTLINE_COLOR);
-    if (tri->outlines[2])
-        canvas_draw_line(tri->canvas, x1, y1, x3, y3, OUTLINE_COLOR);
-    
-}
-
-
-void tri_toggle_outlines(TriangleRasterizer* tri, bool outline1, bool outline2, bool outline3) {
-
-    tri->outlines[0] = outline1;
-    tri->outlines[1] = outline2;
-    tri->outlines[2] = outline3;
+    draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
 }

@@ -21,7 +21,8 @@ typedef struct {
     ModelGenerator* mgen;
     LookUpTables lookup;
 
-    Bitmap* cubeTextureNoise;
+    Bitmap* textureNoise1;
+    Bitmap* textureNoise2;
     Mesh* meshCube;
     Mesh* meshThatOneThing;
 

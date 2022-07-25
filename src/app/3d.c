@@ -49,7 +49,6 @@ void r3d_draw_triangle(Renderer3D* r3d,
     Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C, 
     Vector4 tA, Vector4 tB, Vector4 tC,
-    bool outline1, bool outline2, bool outline3,
     Vector4 normal) {
 
     Triangle t;
@@ -61,7 +60,6 @@ void r3d_draw_triangle(Renderer3D* r3d,
     if (!create_triangle_3D(
         texture, color, tint, 
         A, B, C, tA, tB, tC,  
-        outline1, outline2, outline3,
         &t)) {
 
         return;
@@ -83,24 +81,19 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
     Vector4 A, B, C;
     Vector4 tA, tB, tC;
 
-    bool outline1, outline2, outline3;
-
     for (i = 0; i < mesh->indexCount; i += 3) {
 
         j = mesh->indices[i];
         A = vec3(mesh->vertices[j*3], mesh->vertices[j*3 + 1], mesh->vertices[j*3 + 2]);
         tA = vec2(mesh->uvs[j*2], mesh->uvs[j*2 + 1]);
-        outline1 = mesh->outlines[j];
 
         j = mesh->indices[i+1];
         B = vec3(mesh->vertices[j*3], mesh->vertices[j*3 + 1], mesh->vertices[j*3 + 2]);
         tB = vec2(mesh->uvs[j*2], mesh->uvs[j*2 + 1]);
-        outline2 = mesh->outlines[j];
 
         j = mesh->indices[i+2];
         C = vec3(mesh->vertices[j*3], mesh->vertices[j*3 + 1], mesh->vertices[j*3 + 2]);
         tC = vec2(mesh->uvs[j*2], mesh->uvs[j*2 + 1]);
-        outline3 = mesh->outlines[j];
         
         if (r3d->lightingEnabled) {
 
@@ -113,7 +106,6 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
         r3d_draw_triangle(r3d, transf, 
             texture, color, hue,
             A, B, C, tA, tB, tC, 
-            outline1, outline2, outline3,
             vec4_zero());
     }
 }

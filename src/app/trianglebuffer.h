@@ -33,14 +33,12 @@ typedef struct {
 Triangle create_triangle(
     f32 x1, f32 y1, f32 x2, f32 y2, f32 x3, f32 y3,
     f32 u1, f32 v1, f32 u2, f32 v2, f32 u3, f32 v3,
-    bool outline1, bool outline2, bool outline3,
     Bitmap* texture, u8 color,
     i32 tint, f32 depth);
 bool create_triangle_3D(
     Bitmap* texture, u8 color, i32 tint,
     Vector4 A, Vector4 B, Vector4 C,
     Vector4 tA, Vector4 tB, Vector4 tC,
-    bool outline1, bool outline2, bool outline3,
     Triangle* dest);
 
 
