@@ -34,10 +34,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 }
 
 
-static void draw_outer_model(Application* app, Vector4 lightDir) {
-
-    r3d_toggle_lighting(&app->r3d, true);
-    r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
+static void draw_outer_model(Application* app) {
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
@@ -48,19 +45,16 @@ static void draw_outer_model(Application* app, Vector4 lightDir) {
 }
 
 
-static void draw_inner_model(Application* app, Vector4 lightDir) {
+static void draw_inner_model(Application* app) {
 
     const f32 MODEL_SCALE = 0.33f;
-
-    r3d_toggle_lighting(&app->r3d, true);
-    r3d_set_lighting_properties(&app->r3d, lightDir, 1.0f, LIGHT_BRIGHT);
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, M_PI/4.0f, vec3(-1.0f, 1.0f, 0.0f));
     transf_rotate(&app->transf, app->testAngle, vec3(-1.0f, 1.0f, 0.0f));
     transf_scale(&app->transf, vec3(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE));
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, app->textureNoise2, 255);
+    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 0b10111110);
 
     transf_pop_model(&app->transf);
 }
@@ -78,11 +72,15 @@ static void redraw_callback(void* pApp, Window* win) {
     tribuf_flush(app->tribuffer);
 
     transf_load_identity(&app->transf);
+    transf_translate(&app->transf, vec3(0, 0.25f, 0));
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
-    transf_set_view(&app->transf, vec3(0, 0, -2.5f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
+    transf_set_view(&app->transf, vec3(0, 0, -2.75f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
-    draw_outer_model(app, lightDir);
-    draw_inner_model(app, lightDir);
+    r3d_toggle_lighting(&app->r3d, true);
+    r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
+
+    draw_outer_model(app);
+    draw_inner_model(app);
 
     tribuf_draw(app->tribuffer, &app->rasterizer);
 
@@ -149,7 +147,7 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
-    app->meshCube = mgen_generate_unit_cube(app->mgen, 2, err);
+    app->meshCube = mgen_generate_unit_cube(app->mgen, 3, err);
     if (app->meshCube == NULL) {
 
         dispose_application(app);
