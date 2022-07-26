@@ -8,6 +8,7 @@
 #include "core/window.h"
 
 #include "bitmap.h"
+#include "lookup.h"
 
 
 typedef enum {
@@ -30,21 +31,21 @@ typedef enum {
 
 typedef struct {
 
-    u16 width;
-    u16 height;
-    u8* pixels;
+    IMPLEMENTS_BITMAP
 
     Rectangle clipArea;
+    LookUpTables* lookup;
 
 } Canvas;
 
 
-Canvas* new_canvas(i32 width, i32 height, Error* err);
+Canvas* new_canvas(i32 width, i32 height, bool createMask, LookUpTables* lookup, Error* err);
 void dispose_canvas(Canvas* canvas);
 
 void canvas_update_window_content(Canvas* canvas, Window* win);
 
 void canvas_clear(Canvas* canvas, u8 color);
+void canvas_clear_mask(Canvas* canvas);
 
 void canvas_draw_bitmap_region_fast(Canvas* canvas, Bitmap* bmp,
     i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy);
@@ -68,6 +69,9 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
     str text, u32 start, u32 end, 
     i32 x, i32 y, 
     i32 xoff, i32 yoff, Align align); 
+
+void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue, Flip flip);
 
 void canvas_draw_line(Canvas* canvas, 
     i32 x1, i32 y1, i32 x2, i32 y2, u8 color);

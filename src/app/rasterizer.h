@@ -18,6 +18,8 @@ typedef enum {
 typedef struct {
 
     Canvas* canvas;
+    bool drawToMask;
+    u8* dest;
 
     LookUpTables* lookup;
 
@@ -37,6 +39,8 @@ void tri_set_uv_coordinates(TriangleRasterizer* tri,
 void tri_draw_triangle(TriangleRasterizer* tri, 
     Bitmap* texture, u8 color, i32 hue,
     i32 x1, i32 y1, i32 x2, i32 y2, i32 x3, i32 y3);
+
+void tri_change_active_canvas(TriangleRasterizer* tri, Canvas* newCanvas, bool drawToMask);
 
 
 #endif // NONEMPTY_SPACE_APP_H

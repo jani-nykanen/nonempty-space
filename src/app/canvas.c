@@ -159,7 +159,7 @@ static void draw_text_generic(Canvas* canvas, Bitmap* bmp, str text,
 
 
 
-Canvas* new_canvas(i32 width, i32 height, Error* err) {
+Canvas* new_canvas(i32 width, i32 height, bool createMask, LookUpTables* lookup, Error* err) {
     
     Canvas* canvas = (Canvas*) calloc(1, sizeof(Canvas));
     if (canvas == NULL) {
@@ -179,7 +179,20 @@ Canvas* new_canvas(i32 width, i32 height, Error* err) {
         return NULL;
     }
 
+    if (createMask) {
+
+        canvas->mask = (u8*) calloc(width*height, sizeof(u8));
+        if (canvas->mask == NULL) {
+
+            *err = memory_error();
+            dispose_canvas(canvas);
+            return NULL;
+        }
+    }
+
     canvas->clipArea = rect(0, 0, width, height);
+
+    canvas->lookup = lookup;
 
     return canvas;
 }
@@ -191,6 +204,7 @@ void dispose_canvas(Canvas* canvas) {
         return;
 
     m_free(canvas->pixels);
+    m_free(canvas->mask);
     m_free(canvas);
 }
 
@@ -204,6 +218,15 @@ void canvas_update_window_content(Canvas* canvas, Window* win) {
 void canvas_clear(Canvas* canvas, u8 color) {
 
     memset(canvas->pixels, color, canvas->width*canvas->height);
+}
+
+
+void canvas_clear_mask(Canvas* canvas) {
+
+    if (canvas->mask == NULL)
+        return;
+
+    memset(canvas->mask, 0, canvas->width*canvas->height);
 }
 
 
@@ -366,6 +389,65 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
     draw_text_generic(canvas, bmp, text, 
         start, end, x, y, xoff, yoff, align,
         draw_bitmap_region_no_flip);
+}
+
+
+void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue, Flip flip) {
+
+    // TODO: Repeating code, write a general method to use in both
+    // ordinary draw and this blend function, and then pass a callback
+    // function for pixel operation
+
+    u32 dest;
+    u32 src;
+    i32 x, y;
+    i32 dirx = (flip & FLIP_HORIZONTAL) == 0 ? 1 : -1;
+    i32 diry = (flip & FLIP_VERTICAL) == 0 ? 1 : -1;
+
+    u8 background, target, mask;
+
+    if (bmp->mask == NULL) 
+        return;
+
+    if (!clip_rect_region(canvas, &sx, &sy, &sw, &sh, &dx, &dy, flip))
+        return;
+
+    if (hue < 0) {
+
+        hue *= -1;
+    }
+    else {
+
+        // TODO: Implement?
+        return;
+    }
+
+    src = sy * ((i32) bmp->width) + sx;
+    if ((flip & FLIP_HORIZONTAL) != 0)
+        src += sw - 1;
+
+    dest = dy * ((i32) canvas->width) + dx;
+    if ((flip & FLIP_VERTICAL) != 0)
+        dest += ( (i32) canvas->width) * (sh - 1) + sw - 1;
+
+    for (y = 0; y < sh; ++ y) {
+
+        for (x = 0; x < sw; ++ x) {
+
+            mask = bmp->mask[src];
+            background = canvas->pixels[dest];
+            target = canvas->lookup->tintBlack[canvas->lookup->dither[hue][x % 2 == y % 2]][background];
+
+            canvas->pixels[dest] = (target & mask) | (background & (~mask));
+
+            dest += diry;
+            src += dirx;
+        }
+
+        dest += (canvas->width - sw) * diry;
+        src += bmp->width - sw * dirx;
+    }
 }
 
 

@@ -39,7 +39,7 @@ void r3d_draw_triangle(Renderer3D* r3d,
 void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, 
     Mesh* mesh, Bitmap* texture, u8 color);
 void r3d_project_mesh_to_ground(Renderer3D* r3d, Transformations* transf,
-    Mesh* mesh, f32 groundHeight, i32 hue);
+    Mesh* mesh, f32 groundHeight, u8 color);
 
 void r3d_toggle_lighting(Renderer3D* r3d, bool state);
 void r3d_set_lighting_properties(Renderer3D* r3d,

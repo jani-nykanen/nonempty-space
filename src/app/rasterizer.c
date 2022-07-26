@@ -162,7 +162,7 @@ static void ppfunc_textured(TriangleRasterizer* rasterizer,
     i32 tx, ty;
     TEX_COORD(x, y, tx, ty)
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
+    rasterizer->dest[y * rasterizer->canvas->width + x] = bmp->pixels[ty * bmp->width + tx];
 }
 
 
@@ -173,7 +173,7 @@ static void ppfunc_textured_tint_black(TriangleRasterizer* rasterizer,
     TEX_COORD(x, y, tx, ty)
 
     //  TODO: Replace x % 2 == y % 2 with bitwise operators, if possible!
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
+    rasterizer->dest[y * rasterizer->canvas->width + x] = 
         TINT(tintBlack, x, y, bmp->pixels[ty * bmp->width + tx]);
 }
 
@@ -184,7 +184,7 @@ static void ppfunc_textured_tint_white(TriangleRasterizer* rasterizer,
     i32 tx, ty;
     TEX_COORD(x, y, tx, ty)
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = 
+    rasterizer->dest[y * rasterizer->canvas->width + x] = 
         TINT(tintWhite, x, y, bmp->pixels[ty * bmp->width + tx]);
 }
 
@@ -192,21 +192,21 @@ static void ppfunc_textured_tint_white(TriangleRasterizer* rasterizer,
 static void ppfunc_colored(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = color;
+    rasterizer->dest[y * rasterizer->canvas->width + x] = color;
 }
 
 
 static void ppfunc_colored_tint_black(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = TINT(tintBlack, x, y, color);
+    rasterizer->dest[y * rasterizer->canvas->width + x] = TINT(tintBlack, x, y, color);
 }
 
 
 static void ppfunc_colored_tint_white(TriangleRasterizer* rasterizer, 
     Bitmap* bmp, u8 color, i32 hue, i32 x, i32 y) {
 
-    rasterizer->canvas->pixels[y * rasterizer->canvas->width + x] = TINT(tintWhite, x, y, color);
+    rasterizer->dest[y * rasterizer->canvas->width + x] = TINT(tintWhite, x, y, color);
 }
 
 
@@ -260,6 +260,8 @@ TriangleRasterizer create_triangle_rasterizer(Canvas* canvas, LookUpTables* look
     TriangleRasterizer tri;
 
     tri.canvas = canvas;
+    tri.drawToMask = false;
+    tri.dest = canvas->pixels;
     tri.lookup = lookup;
 
     return tri;
@@ -353,4 +355,19 @@ void tri_draw_triangle(TriangleRasterizer* tri,
     draw_triangle_half(tri, texture, x2, midx, y2, y1, k1, k2, color, hue, ppfunc);
     // Bottom
     draw_triangle_half(tri, texture, x2, midx, y2, y3, k1, k3, color, hue, ppfunc);
+}
+
+
+void tri_change_active_canvas(TriangleRasterizer* tri, Canvas* newCanvas, bool drawToMask) {
+
+    tri->canvas = newCanvas;
+    tri->drawToMask = drawToMask;
+    if (drawToMask) {
+
+        tri->dest = newCanvas->mask;
+    }
+    else {
+
+        tri->dest = newCanvas->pixels;
+    }
 }

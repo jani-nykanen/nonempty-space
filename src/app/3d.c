@@ -31,7 +31,7 @@ static i32 compute_hue(Renderer3D* r3d, Vector4 normal, f32 isDark) {
 
 static void draw_mesh_base(Renderer3D* r3d, Transformations* transf, 
     Mesh* mesh, Bitmap* texture, u8 color,
-    bool projectToGround, f32 groundHeight, i32 groundHue) {
+    bool projectToGround, f32 groundHeight) {
 
     u32 i, j;
     i32 hue = 0;
@@ -55,7 +55,7 @@ static void draw_mesh_base(Renderer3D* r3d, Transformations* transf,
         
         if (projectToGround) {
 
-            hue = groundHue;
+            hue = 0;
         }
         else if (r3d->lightingEnabled) {
 
@@ -128,14 +128,14 @@ void r3d_draw_triangle(Renderer3D* r3d,
 
 void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap* texture, u8 color) {
 
-    draw_mesh_base(r3d, transf, mesh, texture, color, false, 0.0f, 0);
+    draw_mesh_base(r3d, transf, mesh, texture, color, false, 0.0f);
 }
 
 
 void r3d_project_mesh_to_ground(Renderer3D* r3d, Transformations* transf,
-    Mesh* mesh, f32 groundHeight, i32 hue) {
+    Mesh* mesh, f32 groundHeight, u8 color) {
 
-    draw_mesh_base(r3d, transf, mesh, NULL, 0, true, groundHeight, hue);
+    draw_mesh_base(r3d, transf, mesh, NULL, color, true, groundHeight);
 }
 
 

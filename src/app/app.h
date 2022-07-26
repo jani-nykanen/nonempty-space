@@ -14,6 +14,8 @@
 typedef struct {
     
     Canvas* canvas;
+    Canvas* maskedCanvas;
+
     TriangleRasterizer rasterizer;
     TriangleBuffer* tribuffer;
     Transformations transf;

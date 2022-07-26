@@ -34,7 +34,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 }
 
 
-static void draw_outer_model(Application* app, bool isShadow, f32 groundHeight, i32 groundHue) {
+static void draw_outer_model(Application* app, bool isShadow, f32 groundHeight) {
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
@@ -45,14 +45,14 @@ static void draw_outer_model(Application* app, bool isShadow, f32 groundHeight, 
     }
     else {
 
-        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshThatOneThing, groundHeight, groundHue);
+        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshThatOneThing, groundHeight, 255);
     }
 
     transf_pop_model(&app->transf);
 }
 
 
-static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight, i32 groundHue) {
+static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight) {
 
     const f32 MODEL_SCALE = 0.33f;
 
@@ -67,7 +67,7 @@ static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight, 
     }
     else {
 
-        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshCube, groundHeight, groundHue);
+        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshCube, groundHeight, 255);
     }
 
     transf_pop_model(&app->transf);
@@ -77,7 +77,6 @@ static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight, 
 static void draw_models(Application* app, bool isShadow) {
 
     const f32 GROUND_HEIGHT = 1.5f;
-    const i32 GROUND_HUE = 0;
 
     Vector4 lightDir = vec4_normalize(vec3(0.1f, -0.25f, 1.0f), false);
 
@@ -87,8 +86,8 @@ static void draw_models(Application* app, bool isShadow) {
         r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
     }
 
-    draw_outer_model(app, isShadow, GROUND_HEIGHT, GROUND_HUE);
-    draw_inner_model(app, isShadow, GROUND_HEIGHT, GROUND_HUE);
+    draw_outer_model(app, isShadow, GROUND_HEIGHT);
+    draw_inner_model(app, isShadow, GROUND_HEIGHT);
     tribuf_draw(app->tribuffer, &app->rasterizer, !isShadow);
 }
 
@@ -100,6 +99,7 @@ static void redraw_callback(void* pApp, Window* win) {
     f32 ratio = (f32) canvas->width / (f32) canvas->height;
 
     canvas_clear(canvas, 83);
+    canvas_clear_mask(app->maskedCanvas);
     
     tribuf_flush(app->tribuffer);
 
@@ -108,8 +108,14 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -2.75f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
-    // Shadows first
+    // Shadows
+    tri_change_active_canvas(&app->rasterizer, app->maskedCanvas, true);
     draw_models(app, true);
+    canvas_blend_bitmap_region(canvas, (Bitmap*) app->maskedCanvas, 
+        64, 128, 128, 64, 64, 192-64, -3, FLIP_NONE);
+    
+    // Actual models
+    tri_change_active_canvas(&app->rasterizer, app->canvas, false);
     draw_models(app, false);
 
     canvas_update_window_content(canvas, win);
@@ -130,8 +136,15 @@ Application* new_application(Window* win, Error* err) {
     app->lookup = generate_lookup_tables();
 
     window_get_canvas_size(win, &w, &h);
-    app->canvas = new_canvas(w, h, err);
+    app->canvas = new_canvas(w, h, false, &app->lookup, err);
     if (app->canvas == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->maskedCanvas = new_canvas(w, h, true, &app->lookup, err);
+    if (app->maskedCanvas == NULL) {
 
         dispose_application(app);
         return NULL;
@@ -201,6 +214,8 @@ void dispose_application(Application* app) {
         return;
 
     dispose_canvas(app->canvas);
+    dispose_canvas(app->maskedCanvas);
+
     dispose_triangle_buffer(app->tribuffer);
     dispose_model_generator(app->mgen);
 
