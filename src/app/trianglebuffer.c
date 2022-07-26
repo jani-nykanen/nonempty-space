@@ -143,7 +143,7 @@ bool tribuf_push_triangle(TriangleBuffer* buf, Triangle triangle) {
 }
 
 
-void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri) {
+void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri, bool sort) {
 
     i32 i;
     Canvas* canvas = tri->canvas;
@@ -155,7 +155,10 @@ void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri) {
 
     if (buf->count == 0) return;
 
-    qsort((void*) buf->triangles, buf->count, sizeof(Triangle), compare_triangles);
+    if (sort) {
+        
+        qsort((void*) buf->triangles, buf->count, sizeof(Triangle), compare_triangles);
+    }
 
     for (i = 0; i < buf->count; ++ i) {
 
@@ -172,3 +175,4 @@ void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri) {
 
     tribuf_flush(buf);
 }
+

@@ -48,7 +48,7 @@ void dispose_triangle_buffer(TriangleBuffer* buf);
 void tribuf_flush(TriangleBuffer* buf);
 bool tribuf_push_triangle(TriangleBuffer* buf, Triangle triangle);
 
-void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri);
+void tribuf_draw(TriangleBuffer* buf, TriangleRasterizer* tri, bool sort);
 
 
 #endif // NONEMPTY_SPACE_APP_TRIANGLE_BUFFER_H

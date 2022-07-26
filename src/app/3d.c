@@ -29,51 +29,9 @@ static i32 compute_hue(Renderer3D* r3d, Vector4 normal, f32 isDark) {
 }
 
 
-Renderer3D create_renderer_3D(TriangleBuffer* buffer) {
-
-    Renderer3D r3d;
-
-    r3d.buffer = buffer;
-
-    r3d.lightDir = vec3(0, 0, 1.0f);
-    r3d.lightMag = 1.0f;
-    r3d.lightType = LIGHT_DARK;
-    r3d.lightingEnabled = false;
-
-    return r3d;
-}
-
-
-void r3d_draw_triangle(Renderer3D* r3d,
-    Transformations* transf,
-    Bitmap* texture, u8 color, i32 tint,
-    Vector4 A, Vector4 B, Vector4 C, 
-    Vector4 tA, Vector4 tB, Vector4 tC,
-    Vector4 normal) {
-
-    Triangle t;
-
-    A = transf_apply_to_vector(transf, A);
-    B = transf_apply_to_vector(transf, B);
-    C = transf_apply_to_vector(transf, C);
-
-    if (!create_triangle_3D(
-        texture, color, tint, 
-        A, B, C, tA, tB, tC,  
-        &t)) {
-
-        return;
-    }
-
-    if (!tribuf_push_triangle(r3d->buffer, t)) {
-
-        printf("WARNING: Triangle buffer overflow!\n");
-        return;
-    }
-}
-
-
-void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap* texture, u8 color) {
+static void draw_mesh_base(Renderer3D* r3d, Transformations* transf, 
+    Mesh* mesh, Bitmap* texture, u8 color,
+    bool projectToGround, f32 groundHeight, i32 groundHue) {
 
     u32 i, j;
     i32 hue = 0;
@@ -95,7 +53,11 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
         C = vec3(mesh->vertices[j*3], mesh->vertices[j*3 + 1], mesh->vertices[j*3 + 2]);
         tC = vec2(mesh->uvs[j*2], mesh->uvs[j*2 + 1]);
         
-        if (r3d->lightingEnabled) {
+        if (projectToGround) {
+
+            hue = groundHue;
+        }
+        else if (r3d->lightingEnabled) {
 
             hue = compute_hue(r3d, 
                 transf_apply_rotation_to_vector(transf, 
@@ -106,8 +68,74 @@ void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap*
         r3d_draw_triangle(r3d, transf, 
             texture, color, hue,
             A, B, C, tA, tB, tC, 
+            projectToGround, groundHeight,
             vec4_zero());
     }
+}
+
+
+Renderer3D create_renderer_3D(TriangleBuffer* buffer) {
+
+    Renderer3D r3d;
+
+    r3d.buffer = buffer;
+
+    r3d.lightDir = vec3(0, 0, 1.0f);
+    r3d.lightMag = 1.0f;
+    r3d.lightType = LIGHT_DARK;
+    r3d.lightingEnabled = false;
+
+    return r3d;
+}
+
+
+void r3d_draw_triangle(Renderer3D* r3d,
+    Transformations* transf,
+    Bitmap* texture, u8 color, i32 tint,
+    Vector4 A, Vector4 B, Vector4 C, 
+    Vector4 tA, Vector4 tB, Vector4 tC,
+    bool projectToGround, f32 groundHeight,
+    Vector4 normal) {
+
+    Triangle t;
+
+    A = transf_apply_to_vector(transf, A);
+    B = transf_apply_to_vector(transf, B);
+    C = transf_apply_to_vector(transf, C);
+
+    if (projectToGround) {
+
+        A.y = groundHeight;
+        B.y = groundHeight;
+        C.y = groundHeight;
+    }
+
+    if (!create_triangle_3D(
+        texture, color, tint, 
+        A, B, C, tA, tB, tC,  
+        &t)) {
+
+        return;
+    }
+
+    if (!tribuf_push_triangle(r3d->buffer, t)) {
+
+        printf("WARNING: Triangle buffer overflow!\n");
+        return;
+    }
+}
+
+
+void r3d_draw_mesh(Renderer3D* r3d, Transformations* transf, Mesh* mesh, Bitmap* texture, u8 color) {
+
+    draw_mesh_base(r3d, transf, mesh, texture, color, false, 0.0f, 0);
+}
+
+
+void r3d_project_mesh_to_ground(Renderer3D* r3d, Transformations* transf,
+    Mesh* mesh, f32 groundHeight, i32 hue) {
+
+    draw_mesh_base(r3d, transf, mesh, NULL, 0, true, groundHeight, hue);
 }
 
 

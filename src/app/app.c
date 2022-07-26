@@ -34,18 +34,25 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 }
 
 
-static void draw_outer_model(Application* app) {
+static void draw_outer_model(Application* app, bool isShadow, f32 groundHeight, i32 groundHue) {
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshThatOneThing, app->textureNoise1, 255);
+    if (!isShadow) {
+        
+        r3d_draw_mesh(&app->r3d, &app->transf, app->meshThatOneThing, app->textureNoise1, 255);
+    }
+    else {
+
+        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshThatOneThing, groundHeight, groundHue);
+    }
 
     transf_pop_model(&app->transf);
 }
 
 
-static void draw_inner_model(Application* app) {
+static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight, i32 groundHue) {
 
     const f32 MODEL_SCALE = 0.33f;
 
@@ -54,9 +61,35 @@ static void draw_inner_model(Application* app) {
     transf_rotate(&app->transf, app->testAngle, vec3(-1.0f, 1.0f, 0.0f));
     transf_scale(&app->transf, vec3(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE));
 
-    r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 0b10111110);
+    if (!isShadow) {
+        
+        r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 190);
+    }
+    else {
+
+        r3d_project_mesh_to_ground(&app->r3d, &app->transf, app->meshCube, groundHeight, groundHue);
+    }
 
     transf_pop_model(&app->transf);
+}
+
+
+static void draw_models(Application* app, bool isShadow) {
+
+    const f32 GROUND_HEIGHT = 1.5f;
+    const i32 GROUND_HUE = 0;
+
+    Vector4 lightDir = vec4_normalize(vec3(0.1f, -0.25f, 1.0f), false);
+
+    if (!isShadow) {
+
+        r3d_toggle_lighting(&app->r3d, true);
+        r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
+    }
+
+    draw_outer_model(app, isShadow, GROUND_HEIGHT, GROUND_HUE);
+    draw_inner_model(app, isShadow, GROUND_HEIGHT, GROUND_HUE);
+    tribuf_draw(app->tribuffer, &app->rasterizer, !isShadow);
 }
 
 
@@ -64,7 +97,6 @@ static void redraw_callback(void* pApp, Window* win) {
 
     Application* app = (Application*) pApp;
     Canvas* canvas = app->canvas;
-    Vector4 lightDir = vec4_normalize(vec3(0.1f, -0.25f, 1.0f), false);
     f32 ratio = (f32) canvas->width / (f32) canvas->height;
 
     canvas_clear(canvas, 83);
@@ -76,13 +108,9 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -2.75f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
-    r3d_toggle_lighting(&app->r3d, true);
-    r3d_set_lighting_properties(&app->r3d, lightDir, 0.75f, LIGHT_DARK);
-
-    draw_outer_model(app);
-    draw_inner_model(app);
-
-    tribuf_draw(app->tribuffer, &app->rasterizer);
+    // Shadows first
+    draw_models(app, true);
+    draw_models(app, false);
 
     canvas_update_window_content(canvas, win);
 }
