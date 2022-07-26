@@ -28,7 +28,8 @@ typedef struct {
     Mesh* meshCube;
     Mesh* meshThatOneThing;
 
-    f32 testAngle;
+    f32 modelAngle;
+    f32 groundPos;
 
 } Application;
 

@@ -14,7 +14,8 @@
 void draw_floor_3D(Canvas* canvas, Bitmap* texture,
     Transformations* transf, 
     f32 startDepth, f32 endDepth,
-    f32 xdif, f32 height);
+    f32 xdif, f32 height,
+    f32 zshift);
 
 
 #endif // NONEMPTY_SPACE_APP_FLOOR_H

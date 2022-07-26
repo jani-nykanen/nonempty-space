@@ -28,17 +28,22 @@ static void handle_default_key_shortcuts(Application* app, Window* win) {
 
 static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
+    const f32 GROUND_SPEED = 0.0025f;
+
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
 
-    app->testAngle = fmodf(app->testAngle - 0.025f * timeStep, M_PI * 2.0f);
+    app->modelAngle = fmodf(app->modelAngle - 0.025f * timeStep, M_PI * 2.0f);
+    app->groundPos += GROUND_SPEED * timeStep;
+
+    app->groundPos = fmodf(app->groundPos, 1.0f);
 }
 
 
 static void draw_outer_model(Application* app, bool isShadow, f32 groundHeight) {
 
     transf_push_model(&app->transf);
-    transf_rotate(&app->transf, app->testAngle, vec3(1.0f, -1.0f, 0.0f));
+    transf_rotate(&app->transf, app->modelAngle, vec3(1.0f, -1.0f, 0.0f));
 
     if (!isShadow) {
         
@@ -59,7 +64,7 @@ static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight) 
 
     transf_push_model(&app->transf);
     transf_rotate(&app->transf, M_PI/4.0f, vec3(-1.0f, 1.0f, 0.0f));
-    transf_rotate(&app->transf, app->testAngle, vec3(-1.0f, 1.0f, 0.0f));
+    transf_rotate(&app->transf, app->modelAngle, vec3(-1.0f, 1.0f, 0.0f));
     transf_scale(&app->transf, vec3(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE));
 
     if (!isShadow) {
@@ -104,12 +109,14 @@ static void redraw_callback(void* pApp, Window* win) {
     
     tribuf_flush(app->tribuffer);
 
-    draw_floor_3D(app->canvas, app->textureNoise2, &app->transf, 0.5f, 100.0f, 2.0f, 1.5f);
-
     transf_load_identity(&app->transf);
-    transf_translate(&app->transf, vec3(0, 0.25f, 0));
     transf_set_perspective_projection(&app->transf, 60.0f, ratio, 0.05f, 100.0f);
     transf_set_view(&app->transf, vec3(0, 0, -2.75f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
+
+    draw_floor_3D(app->canvas, app->textureNoise2, &app->transf, 
+        -0.5f, 5.0f, 2.0f, -1.5f, -app->groundPos);
+
+    transf_translate(&app->transf, vec3(0, 0.25f, 0));
 
     // Shadows
     tri_change_active_canvas(&app->rasterizer, app->maskedCanvas, true);
@@ -182,8 +189,8 @@ Application* new_application(Window* win, Error* err) {
     }
 
     app->textureNoise2 = generate_gaussian_noise_bitmap(
-        64, 64, -1.5f, 1.5f, 1, 
-        vec3(0.20f, 0.5f, 0.33f), 54321, err);
+        256, 256, -1.5f, 1.5f, 1, 
+        vec3(0.67f, 1.0f, 0.33f), 54321, err);
     if (app->textureNoise2 == NULL) {
 
         *err = memory_error();
@@ -205,7 +212,8 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
-    app->testAngle = 0.0f;
+    app->modelAngle = 0.0f;
+    app->groundPos = 0.0f;
 
     return app;
 }
