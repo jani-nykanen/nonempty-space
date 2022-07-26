@@ -1,5 +1,6 @@
 #include "app.h"
 #include "noisegen.h"
+#include "floor.h"
 
 #include "common/memory.h"
 
@@ -102,6 +103,8 @@ static void redraw_callback(void* pApp, Window* win) {
     canvas_clear_mask(app->maskedCanvas);
     
     tribuf_flush(app->tribuffer);
+
+    draw_floor_3D(app->canvas, app->textureNoise2, &app->transf, 0.5f, 100.0f, 2.0f, 1.5f);
 
     transf_load_identity(&app->transf);
     transf_translate(&app->transf, vec3(0, 0.25f, 0));
