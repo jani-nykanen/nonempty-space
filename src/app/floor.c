@@ -9,39 +9,17 @@
 #define PRECISION 12
 
 
-static const i32 UNIT = 1 << PRECISION;
-
-
-static i32 correct_perspective(i32 d0, i32 d1, i32 d, i32 h, i32 shift) {
-
-    i32 p1, p2, out;
-
-    p1 = (UNIT - d) << PRECISION;
-    p1 /= d0;
-
-    p2 = d << PRECISION;
-    p2 /= d1;
-
-    out = d << PRECISION;
-    out /= d1;
-
-    out <<= PRECISION;
-    out /= p1 + p2;
-
-    out += shift;
-    out *= h;
-    out >>= PRECISION;
-
-    return out;
-}
-
-
 void draw_floor_3D(Canvas* canvas, Bitmap* texture,
     Transformations* transf, f32 startDepth, f32 endDepth,
-    f32 xdif, f32 height,
-    f32 zshift) {
+    f32 xdif, f32 height, f32 zshift,
+    bool enableFog, f32 fogDensity) {
 
     // TODO: Split to multiple functions for clarity
+
+    // Notes: we use floating points to compute depth, but fixed point
+    // for drawing the "scanlines". Reason: floating point operations are
+    // only done once par "scanline", but fixed point operations once
+    // per pixel.
 
     const f32 NEAR = 0.025f;
 
@@ -59,11 +37,12 @@ void draw_floor_3D(Canvas* canvas, Bitmap* texture,
     i32 tx, tstepx;
     i32 itx, ity;
     i32 texh;
-    i32 ishift;
-    
-    i32 d0 = (i32) (A.z * UNIT);
-    i32 d1 = (i32) (B.z * UNIT);
-    i32 d, dstep;
+
+    f32 depth;
+    f32 d, depthStep;
+
+    f32 fog;
+    i32 hue;
 
     if (endDepth < startDepth || A.z < NEAR) 
         return;
@@ -95,17 +74,14 @@ void draw_floor_3D(Canvas* canvas, Bitmap* texture,
     xstart <<= PRECISION;
 
     tstepx = texture->width << PRECISION;
-    texh = (i32) (fabsf(endDepth - startDepth) / (xdif*2) * texture->height);
-
-    ishift = (i32) (zshift * UNIT);
-
-    dstep = abs(d0 - d1);
-    dstep /= yend - ystart;
-    d = d1;
+    texh = (i32) (fabsf(B.z - A.z) / (xdif*2) * texture->height);
+ 
+    depthStep = (B.z - A.z) / ((f32) (yend - ystart));
+    d = B.z;
 
     for (dy = ystart; dy != yend; dy += stepy,
         xstart += stepx,
-        d += dstep) {
+        d += depthStep) {
 
         if ((stepy > 0 && dy < 0) ||
             (stepy < 0 && dy >= canvas->height))
@@ -116,7 +92,6 @@ void draw_floor_3D(Canvas* canvas, Bitmap* texture,
             break;
 
         ixstart = xstart >> PRECISION;
-        tx = 0;
 
         ixdif = (canvas->width/2 - ixstart);
         if (ixdif == 0)
@@ -124,22 +99,28 @@ void draw_floor_3D(Canvas* canvas, Bitmap* texture,
 
         tstepx = texture->width << PRECISION;
         tstepx /= 2 * ixdif;
-
         if (ixstart < 0) {
 
             tx += (-ixstart) * tstepx;
         }
 
+        // Compute texture y coordinate
+        depth = (d / B.z) / ((1.0f - d) / A.z + d / B.z);
+        ity = (i32) neg_mod_i32(roundf(depth * texh + zshift * texture->height), texture->height);  
 
-        for (dx = max_i32(0, ixstart); 
-            dx < min_i32(canvas->width, canvas->width/2 + ixdif); 
-            ++ dx,
-            tx += tstepx) {
+        // Compute fog
+        fog = depth * fogDensity;
+        fog = 1.0f - clamp_f32(1.0f / expf(fog*fog), 0.0f, 1.0f);
+        hue = (i32) (fog * (TINT_MAX-1)*2);
+
+        tx = -ixstart * tstepx;
+        for (dx = 0; dx < canvas->width; ++ dx, tx += tstepx) {
 
             itx = neg_mod_i32(tx >> PRECISION, texture->width);
-            ity = neg_mod_i32(correct_perspective(d0, d1, d, texh, ishift), texture->height);
 
-            canvas->pixels[dy * canvas->width + dx] = texture->pixels[ity * texture->width + itx];
+            canvas->pixels[dy * canvas->width + dx] = 
+                canvas->lookup->tintBlack[canvas->lookup->dither[hue][dx % 2 == dy % 2]] 
+                    [texture->pixels[ity * texture->width + itx]];
         }
     }
 

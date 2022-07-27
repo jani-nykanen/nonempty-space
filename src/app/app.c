@@ -114,7 +114,8 @@ static void redraw_callback(void* pApp, Window* win) {
     transf_set_view(&app->transf, vec3(0, 0, -2.75f), vec3(0, 0, 0), vec3(0, 1.0f, 0));
 
     draw_floor_3D(app->canvas, app->textureNoise2, &app->transf, 
-        -0.5f, 5.0f, 2.0f, -1.5f, -app->groundPos);
+        -1.5f, 6.0f, 2.0f, -1.5f, -app->groundPos,
+        true,  0.85f);
 
     transf_translate(&app->transf, vec3(0, 0.25f, 0));
 
