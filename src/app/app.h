@@ -32,6 +32,7 @@ typedef struct {
 
     f32 modelAngle;
     f32 groundPos;
+    f32 wind;
 
 } Application;
 

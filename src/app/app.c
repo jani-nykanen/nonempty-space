@@ -30,6 +30,7 @@ static void handle_default_key_shortcuts(Application* app, Window* win) {
 static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
     const f32 GROUND_SPEED = 0.005f;
+    const f32 WIND_SPEED = 0.05f;
 
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
@@ -38,6 +39,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
     app->groundPos += GROUND_SPEED * timeStep;
 
     app->groundPos = fmodf(app->groundPos, 1.0f);
+    app->wind = fmodf(app->wind + WIND_SPEED*timeStep, M_PI*2.0f);
 }
 
 
@@ -99,6 +101,34 @@ static void draw_models(Application* app, bool isShadow) {
 }
 
 
+static void draw_forest(Application* app) {
+
+    const i32 FOREST_Y = 80;
+    const f32 AMPLITUDE = 2.0f;
+    const f32 PERIOD = M_PI*2.0f;
+
+    Canvas* canvas = app->canvas;
+    Bitmap* bmp = app->forestBackground;
+    i32 y;
+
+    i32 shiftx = 0; // (i32) roundf(sinf(app->wind) * AMPLITUDE);
+    f32 step = PERIOD / ((f32) bmp->height);
+
+    i32 offset = ((i32) bmp->width) - ((i32) canvas->width);
+
+    // canvas_draw_bitmap(canvas, app->forestBackground, 0, 80, FLIP_NONE);
+
+    for (y = 0; y < ((i32) bmp->height); ++ y) {
+
+        shiftx = (i32) roundf(sinf(app->wind + step*y) * AMPLITUDE);
+
+        canvas_draw_bitmap_region(canvas, app->forestBackground,
+            0, y, (i32) bmp->width, 1,
+            -offset/2 + shiftx, y + FOREST_Y, FLIP_NONE);
+    }
+}
+
+
 static void redraw_callback(void* pApp, Window* win) {
 
     Application* app = (Application*) pApp;
@@ -108,7 +138,7 @@ static void redraw_callback(void* pApp, Window* win) {
     canvas_clear(canvas, 83);
     canvas_clear_mask(app->maskedCanvas);
     
-    canvas_draw_bitmap(canvas, app->forestBackground, 0, 80, FLIP_NONE);
+    draw_forest(app);
 
     tribuf_flush(app->tribuffer);
 
@@ -137,6 +167,8 @@ static void redraw_callback(void* pApp, Window* win) {
 
 
 Application* new_application(Window* win, Error* err) {
+
+    const u16 FOREST_MARGIN = 8;
 
     i32 w, h;
 
@@ -200,7 +232,8 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
-    app->forestBackground = generate_forest_background((u16) w, 48, 10128, 0, err);
+    app->forestBackground = generate_forest_background(
+        ((u16) w) + FOREST_MARGIN*2, 48, 10128, 0, err);
     if (app->forestBackground == NULL) {
 
         dispose_application(app);
@@ -223,6 +256,7 @@ Application* new_application(Window* win, Error* err) {
 
     app->modelAngle = 0.0f;
     app->groundPos = 0.0f;
+    app->wind = 0.0f;
 
     return app;
 }
