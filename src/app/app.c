@@ -1,6 +1,7 @@
 #include "app.h"
 #include "noisegen.h"
 #include "floor.h"
+#include "background.h"
 
 #include "common/memory.h"
 
@@ -69,7 +70,7 @@ static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight) 
 
     if (!isShadow) {
         
-        r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 190);
+        r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 0b11010011);
     }
     else {
 
@@ -107,6 +108,8 @@ static void redraw_callback(void* pApp, Window* win) {
     canvas_clear(canvas, 83);
     canvas_clear_mask(app->maskedCanvas);
     
+    canvas_draw_bitmap(canvas, app->forestBackground, 0, 80, FLIP_NONE);
+
     tribuf_flush(app->tribuffer);
 
     transf_load_identity(&app->transf);
@@ -184,7 +187,6 @@ Application* new_application(Window* win, Error* err) {
         vec3(1.0f, 0.67f, 0.33f), 12345, err);
     if (app->textureNoise1 == NULL) {
 
-        *err = memory_error();
         dispose_application(app);
         return NULL;
     }
@@ -194,7 +196,13 @@ Application* new_application(Window* win, Error* err) {
         vec3(0.80f, 1.0f, 0.50f), 54321, err);
     if (app->textureNoise2 == NULL) {
 
-        *err = memory_error();
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->forestBackground = generate_forest_background((u16) w, 48, 10128, 0, err);
+    if (app->forestBackground == NULL) {
+
         dispose_application(app);
         return NULL;
     }
@@ -233,6 +241,7 @@ void dispose_application(Application* app) {
 
     dispose_bitmap(app->textureNoise1);
     dispose_bitmap(app->textureNoise2);
+    dispose_bitmap(app->forestBackground);
 
     dispose_mesh(app->meshCube);
     dispose_mesh(app->meshThatOneThing);

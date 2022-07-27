@@ -4,6 +4,7 @@
 #include "common/memory.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 
 Bitmap* new_bitmap(u16 width, u16 height, Error* err) {
@@ -33,6 +34,8 @@ Bitmap* new_bitmap(u16 width, u16 height, Error* err) {
         dispose_bitmap(bmp);
         return NULL;
     }
+
+    memset(bmp->mask, 255, width*height);
 
     return bmp;
 }

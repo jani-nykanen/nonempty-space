@@ -25,6 +25,8 @@ typedef struct {
 
     Bitmap* textureNoise1;
     Bitmap* textureNoise2;
+    Bitmap* forestBackground;
+
     Mesh* meshCube;
     Mesh* meshThatOneThing;
 
