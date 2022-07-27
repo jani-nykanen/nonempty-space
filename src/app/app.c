@@ -28,7 +28,7 @@ static void handle_default_key_shortcuts(Application* app, Window* win) {
 
 static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
-    const f32 GROUND_SPEED = 0.0025f;
+    const f32 GROUND_SPEED = 0.005f;
 
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
@@ -115,7 +115,7 @@ static void redraw_callback(void* pApp, Window* win) {
 
     draw_floor_3D(app->canvas, app->textureNoise2, &app->transf, 
         -1.5f, 6.0f, 2.0f, -1.5f, -app->groundPos,
-        true,  0.85f);
+        true,  0.75f);
 
     transf_translate(&app->transf, vec3(0, 0.25f, 0));
 
@@ -190,8 +190,8 @@ Application* new_application(Window* win, Error* err) {
     }
 
     app->textureNoise2 = generate_gaussian_noise_bitmap(
-        256, 256, -1.5f, 1.5f, 1, 
-        vec3(0.67f, 1.0f, 0.33f), 54321, err);
+        256, 256, -1.0f, 1.0f, 2, 
+        vec3(0.80f, 1.0f, 0.50f), 54321, err);
     if (app->textureNoise2 == NULL) {
 
         *err = memory_error();
