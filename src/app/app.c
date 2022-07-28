@@ -244,9 +244,9 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
-    app->skyBackground = generate_starry_sky((u16) w, 128, 12345, 
+    app->skyBackground = generate_starry_sky((u16) w, 120, 60009, 
         (u8*) SKY_COLORS, SKY_COLOR_COUNT, 
-        (i32*) SKY_COLOR_TRANSITION_HEIGHT, 16, err);
+        (i32*) SKY_COLOR_TRANSITION_HEIGHT, 32, 220, 51, 24, err);
     if (app->skyBackground == NULL) {
 
         dispose_application(app);
