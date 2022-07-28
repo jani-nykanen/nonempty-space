@@ -138,6 +138,7 @@ static void redraw_callback(void* pApp, Window* win) {
     canvas_clear(canvas, 83);
     canvas_clear_mask(app->maskedCanvas);
     
+    canvas_draw_bitmap_fast(canvas, app->skyBackground, 0, 0);
     draw_forest(app);
 
     tribuf_flush(app->tribuffer);
@@ -169,6 +170,9 @@ static void redraw_callback(void* pApp, Window* win) {
 Application* new_application(Window* win, Error* err) {
 
     const u16 FOREST_MARGIN = 8;
+    const u8 SKY_COLORS[] = {0b01, 0b00110, 0b00001010};
+    const i32 SKY_COLOR_TRANSITION_HEIGHT[] = {8, 12, 16, 20};
+    const u32 SKY_COLOR_COUNT = 3;
 
     i32 w, h;
 
@@ -240,6 +244,15 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
+    app->skyBackground = generate_starry_sky((u16) w, 128, 12345, 
+        (u8*) SKY_COLORS, SKY_COLOR_COUNT, 
+        (i32*) SKY_COLOR_TRANSITION_HEIGHT, 16, err);
+    if (app->skyBackground == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
     app->meshCube = mgen_generate_unit_cube(app->mgen, 3, err);
     if (app->meshCube == NULL) {
 
@@ -276,6 +289,7 @@ void dispose_application(Application* app) {
     dispose_bitmap(app->textureNoise1);
     dispose_bitmap(app->textureNoise2);
     dispose_bitmap(app->forestBackground);
+    dispose_bitmap(app->skyBackground);
 
     dispose_mesh(app->meshCube);
     dispose_mesh(app->meshThatOneThing);
