@@ -27,6 +27,7 @@ typedef struct {
     Bitmap* textureNoise2;
     Bitmap* forestBackground;
     Bitmap* skyBackground;
+    Bitmap* debugFont;
 
     Mesh* meshCube;
     Mesh* meshThatOneThing;
@@ -34,6 +35,7 @@ typedef struct {
     f32 modelAngle;
     f32 groundPos;
     f32 wind;
+    i32 framerate;
 
 } Application;
 

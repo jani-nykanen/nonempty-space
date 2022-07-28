@@ -56,7 +56,7 @@ static void fill_sky(Bitmap* target, i32 w, i32 h,
 static void draw_star(Bitmap* dest, i32 x, i32 y, i32 radius) {
 
     const u8 INNER_COLOR = 255;
-    const u8 OUTER_COLOR = 147;
+    const u8 OUTER_COLOR = 155;
 
     // TODO: Check if in the proper range
 
@@ -83,15 +83,15 @@ static void draw_star(Bitmap* dest, i32 x, i32 y, i32 radius) {
 static void generate_stars(Bitmap* dest, i32 starCount) {
 
     const i32 OFFSET = 8;
-    const i32 RADIUS_PROB[] = {50, 90, 100};
+    const i32 RADIUS_PROB[] = {50, 85, 100};
 
     i32 w = (i32) dest->width;
     i32 h = (i32) dest->height;
 
     i32 xoff = OFFSET;
     i32 yoff = OFFSET;
-    i32 rangeW = w - xoff;
-    i32 rangeH = h - yoff;
+    i32 rangeW = w - xoff*2;
+    i32 rangeH = h - yoff*2;
 
     i32 i, j;
     i32 dx, dy;

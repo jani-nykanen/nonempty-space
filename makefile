@@ -43,3 +43,13 @@ run:
 	./application
 
 all: common glad core application
+
+
+mono2src:
+	mkdir -p ./bin
+	gcc -o ./bin/$@ ./tools/$@.c -lm 
+
+
+.PHONY: font
+font:
+	./bin/mono2src assets/font.png src/app/fontsrc.h

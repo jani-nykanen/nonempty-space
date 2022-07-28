@@ -2,6 +2,7 @@
 #include "noisegen.h"
 #include "floor.h"
 #include "background.h"
+#include "font.h"
 
 #include "common/memory.h"
 
@@ -40,6 +41,8 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
     app->groundPos = fmodf(app->groundPos, 1.0f);
     app->wind = fmodf(app->wind + WIND_SPEED*timeStep, M_PI*2.0f);
+
+    app->framerate = (i32) roundf(60.0f / timeStep);
 }
 
 
@@ -72,7 +75,7 @@ static void draw_inner_model(Application* app, bool isShadow, f32 groundHeight) 
 
     if (!isShadow) {
         
-        r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 0b11010011);
+        r3d_draw_mesh(&app->r3d, &app->transf, app->meshCube, NULL, 211);
     }
     else {
 
@@ -129,6 +132,16 @@ static void draw_forest(Application* app) {
 }
 
 
+static void draw_fps(Application* app) {
+
+    Canvas* canvas = app->canvas;
+    char buffer[64];
+
+    snprintf(buffer, 64, "FPS: %d", app->framerate);
+    canvas_draw_text(canvas, app->debugFont, buffer, 2, 2, -1, 0, ALIGN_LEFT);
+}
+
+
 static void redraw_callback(void* pApp, Window* win) {
 
     Application* app = (Application*) pApp;
@@ -163,6 +176,8 @@ static void redraw_callback(void* pApp, Window* win) {
     tri_change_active_canvas(&app->rasterizer, app->canvas, false);
     draw_models(app, false);
 
+    draw_fps(app);
+
     canvas_update_window_content(canvas, win);
 }
 
@@ -170,7 +185,7 @@ static void redraw_callback(void* pApp, Window* win) {
 Application* new_application(Window* win, Error* err) {
 
     const u16 FOREST_MARGIN = 8;
-    const u8 SKY_COLORS[] = {0b01, 0b00110, 0b00001010};
+    const u8 SKY_COLORS[] = {10, 15, 19};
     const i32 SKY_COLOR_TRANSITION_HEIGHT[] = {8, 12, 16, 20};
     const u32 SKY_COLOR_COUNT = 3;
 
@@ -244,10 +259,17 @@ Application* new_application(Window* win, Error* err) {
         return NULL;
     }
 
-    app->skyBackground = generate_starry_sky((u16) w, 120, 60009, 
+    app->skyBackground = generate_starry_sky((u16) w, 120, 70119, 
         (u8*) SKY_COLORS, SKY_COLOR_COUNT, 
-        (i32*) SKY_COLOR_TRANSITION_HEIGHT, 32, 220, 51, 24, err);
+        (i32*) SKY_COLOR_TRANSITION_HEIGHT, 32, 208, 40, 24, err);
     if (app->skyBackground == NULL) {
+
+        dispose_application(app);
+        return NULL;
+    }
+
+    app->debugFont = create_debug_font(err);
+    if (app->debugFont == NULL) {
 
         dispose_application(app);
         return NULL;
@@ -270,6 +292,7 @@ Application* new_application(Window* win, Error* err) {
     app->modelAngle = 0.0f;
     app->groundPos = 0.0f;
     app->wind = 0.0f;
+    app->framerate = 60;
 
     return app;
 }
@@ -290,6 +313,7 @@ void dispose_application(Application* app) {
     dispose_bitmap(app->textureNoise2);
     dispose_bitmap(app->forestBackground);
     dispose_bitmap(app->skyBackground);
+    dispose_bitmap(app->debugFont);
 
     dispose_mesh(app->meshCube);
     dispose_mesh(app->meshThatOneThing);

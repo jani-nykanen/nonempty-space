@@ -1,3 +1,4 @@
 lib
 *.o
 application
+bin
