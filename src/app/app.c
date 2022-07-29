@@ -13,8 +13,9 @@
 
 static void handle_default_key_shortcuts(Application* app, Window* win) {
 
-    if ((window_get_key_state(win, KEY_LEFT_CONTROL) & STATE_DOWN_OR_PRESSED) == 1 &&
-        window_get_key_state(win, KEY_Q) == STATE_PRESSED) {
+    if (window_get_key_state(win, KEY_ESCAPE) == STATE_PRESSED ||
+        ((window_get_key_state(win, KEY_LEFT_CONTROL) & STATE_DOWN_OR_PRESSED) == 1 &&
+        window_get_key_state(win, KEY_Q) == STATE_PRESSED)) {
 
         window_terminate(win);
     }
@@ -32,6 +33,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
     const f32 GROUND_SPEED = 0.005f;
     const f32 WIND_SPEED = 0.05f;
+    const f32 TEXT_ALPHA_SPEED = 0.1f;
 
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
@@ -41,6 +43,7 @@ static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
     app->groundPos = fmodf(app->groundPos, 1.0f);
     app->wind = fmodf(app->wind + WIND_SPEED*timeStep, M_PI*2.0f);
+    app->textAlpha = fmodf(app->textAlpha + TEXT_ALPHA_SPEED*timeStep, M_PI*2.0f);
 
     app->framerate = (i32) roundf(60.0f / timeStep);
 }
@@ -132,13 +135,23 @@ static void draw_forest(Application* app) {
 }
 
 
-static void draw_fps(Application* app) {
+static void draw_text(Application* app) {
+
+    const i32 BASE_HUE = 6;
+    const i32 HUE_VARY = 2;
 
     Canvas* canvas = app->canvas;
     char buffer[64];
 
+    i32 hue = (i32) roundf(BASE_HUE + sinf(app->textAlpha) * HUE_VARY);
+
     snprintf(buffer, 64, "FPS: %d", app->framerate);
-    canvas_blend_text(canvas, app->debugFont, buffer, 2, 2, -1, 0, ALIGN_LEFT, 6);
+    canvas_draw_text(canvas, app->debugFont, buffer, 2, 2, -1, 0, ALIGN_LEFT);
+
+    canvas_blend_text(canvas, app->debugFont, "Press ESC to quit", 
+        canvas->width - 2, 
+        canvas->height - 10, 
+        -1, 0, ALIGN_RIGHT, hue);
 }
 
 
@@ -176,7 +189,7 @@ static void redraw_callback(void* pApp, Window* win) {
     tri_change_active_canvas(&app->rasterizer, app->canvas, false);
     draw_models(app, false);
 
-    draw_fps(app);
+    draw_text(app);
 
     canvas_update_window_content(canvas, win);
 }
@@ -293,6 +306,7 @@ Application* new_application(Window* win, Error* err) {
     app->groundPos = 0.0f;
     app->wind = 0.0f;
     app->framerate = 60;
+    app->textAlpha = 0.0f;
 
     return app;
 }
