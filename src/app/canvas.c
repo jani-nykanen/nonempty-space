@@ -9,7 +9,7 @@
 
 
 typedef void (*TextFunction) (Canvas* canvas, Bitmap* bmp, 
-    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy);
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue);
 
 
 static bool clip_rect(Canvas* canvas, 
@@ -91,15 +91,29 @@ static bool clip_rect_region(Canvas* canvas,
 
 
 // For text rendering
-static void draw_bitmap_region_no_flip(Canvas* canvas, Bitmap* bmp,
-    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy) {
+static void textfunc_draw_bitmap_region_fast(Canvas* canvas, Bitmap* bmp,
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue) {
+
+    canvas_draw_bitmap_region_fast(canvas, bmp, sx, sy, sw, sh, dx, dy);
+}
+
+
+static void textfunc_draw_bitmap_region_no_flip(Canvas* canvas, Bitmap* bmp,
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue) {
 
     canvas_draw_bitmap_region(canvas, bmp, sx, sy, sw, sh, dx, dy, FLIP_NONE);
 }
 
 
+static void textfunc_blend_bitmap_region_no_flip(Canvas* canvas, Bitmap* bmp,
+    i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue) {
+
+    canvas_blend_bitmap_region(canvas, bmp, sx, sy, sw, sh, dx, dy, hue, FLIP_NONE);
+}
+
+
 static void draw_text_generic(Canvas* canvas, Bitmap* bmp, str text,
-    u32 start, u32 end, i32 x, i32 y, i32 xoff, i32 yoff, Align textAlign,
+    u32 start, u32 end, i32 x, i32 y, i32 xoff, i32 yoff, Align textAlign, i32 hue,
     TextFunction func) {
 
     i32 dx, dy; 
@@ -151,7 +165,7 @@ static void draw_text_generic(Canvas* canvas, Bitmap* bmp, str text,
         sx = chr % 16; 
         sy = chr / 16; 
 
-        func(canvas, bmp, sx*charw, sy*charh, charw, charh, dx, dy);
+        func(canvas, bmp, sx*charw, sy*charh, charw, charh, dx, dy, hue);
 
         dx += charw + xoff; 
     }
@@ -282,8 +296,8 @@ void canvas_draw_text_fast(Canvas* canvas, Bitmap* bmp,
     i32 xoff, i32 yoff, Align align) {
 
     draw_text_generic(canvas, bmp, text, 
-        0, (u32) strlen(text), x, y, xoff, yoff, align,
-        canvas_draw_bitmap_region_fast);
+        0, (u32) strlen(text), x, y, xoff, yoff, align, 0,
+        textfunc_draw_bitmap_region_fast);
 }
 
 
@@ -293,8 +307,8 @@ void canvas_draw_text_substring_fast(Canvas* canvas, Bitmap* bmp,
     i32 xoff, i32 yoff, Align align) {
 
     draw_text_generic(canvas, bmp, text, 
-        start, end, x, y, xoff, yoff, align,
-        canvas_draw_bitmap_region_fast);
+        start, end, x, y, xoff, yoff, align, 0,
+        textfunc_draw_bitmap_region_fast);
 }
 
 
@@ -376,8 +390,8 @@ void canvas_draw_text(Canvas* canvas, Bitmap* bmp,
     i32 xoff, i32 yoff, Align align) {
 
     draw_text_generic(canvas, bmp, text, 
-        0, (u32) strlen(text), x, y, xoff, yoff, align,
-        draw_bitmap_region_no_flip);
+        0, (u32) strlen(text), x, y, xoff, yoff, align, 0,
+        textfunc_draw_bitmap_region_no_flip);
 }
 
 
@@ -387,8 +401,8 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
     i32 xoff, i32 yoff, Align align) {
 
     draw_text_generic(canvas, bmp, text, 
-        start, end, x, y, xoff, yoff, align,
-        draw_bitmap_region_no_flip);
+        start, end, x, y, xoff, yoff, align, 0,
+        textfunc_draw_bitmap_region_no_flip);
 }
 
 
@@ -406,6 +420,7 @@ void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
     i32 diry = (flip & FLIP_VERTICAL) == 0 ? 1 : -1;
 
     u8 background, target, mask;
+    u8 (*tint) [TINT_MAX][256];
 
     if (bmp->mask == NULL) 
         return;
@@ -413,14 +428,11 @@ void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
     if (!clip_rect_region(canvas, &sx, &sy, &sw, &sh, &dx, &dy, flip))
         return;
 
+    tint = &canvas->lookup->tintWhite;
     if (hue < 0) {
 
         hue *= -1;
-    }
-    else {
-
-        // TODO: Implement?
-        return;
+        tint = &canvas->lookup->tintBlack;
     }
 
     src = sy * ((i32) bmp->width) + sx;
@@ -437,7 +449,7 @@ void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
 
             mask = bmp->mask[src];
             background = canvas->pixels[dest];
-            target = canvas->lookup->tintBlack[canvas->lookup->dither[hue][x % 2 == y % 2]][background];
+            target = (*tint)[canvas->lookup->dither[hue][x % 2 == y % 2]][background];
 
             canvas->pixels[dest] = (target & mask) | (background & (~mask));
 
@@ -448,6 +460,16 @@ void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
         dest += (canvas->width - sw) * diry;
         src += bmp->width - sw * dirx;
     }
+}
+
+
+void canvas_blend_text(Canvas* canvas, Bitmap* bmp,
+    str text, i32 x, i32 y, 
+    i32 xoff, i32 yoff, Align align, i32 hue) {
+
+    draw_text_generic(canvas, bmp, text, 
+        0, (u32) strlen(text), x, y, xoff, yoff, align, hue,
+        textfunc_blend_bitmap_region_no_flip);
 }
 
 

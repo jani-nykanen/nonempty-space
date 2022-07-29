@@ -138,7 +138,7 @@ static void draw_fps(Application* app) {
     char buffer[64];
 
     snprintf(buffer, 64, "FPS: %d", app->framerate);
-    canvas_draw_text(canvas, app->debugFont, buffer, 2, 2, -1, 0, ALIGN_LEFT);
+    canvas_blend_text(canvas, app->debugFont, buffer, 2, 2, -1, 0, ALIGN_LEFT, 6);
 }
 
 

@@ -72,6 +72,9 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
 
 void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
     i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue, Flip flip);
+void canvas_blend_text(Canvas* canvas, Bitmap* bmp,
+    str text, i32 x, i32 y, 
+    i32 xoff, i32 yoff, Align align, i32 hue);  
 
 void canvas_draw_line(Canvas* canvas, 
     i32 x1, i32 y1, i32 x2, i32 y2, u8 color);
