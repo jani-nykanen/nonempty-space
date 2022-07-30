@@ -1,7 +1,7 @@
 ## Nonempty Space
 
 
-...is a software rendered 3D demo written in C. Its only goal is to demonstrate my rewritten software renderer. 
+...is a software rendered 3D demo written in C. Its only goal is to demonstrate my rewritten software renderer. It's called "Nonempty Space" because it was supposed to be space-themed, and I didn't bother to rename it.
 
 
 ### Binaries
