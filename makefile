@@ -1,4 +1,9 @@
-LD_FLAGS :=  lib/libcommon.a lib/libcore.a lib/libglad.a -lGL -lglfw3 -pthread -ldl -lGL -lrt -lXrandr -lXi -lXinerama -lX11 -lm
+CC := gcc # i686-w64-mingw32-gcc
+LIBFOLDER := lib# libwin32
+
+LD_FLAGS_WIN32 := $(LIBFOLDER)/libcommon.a  $(LIBFOLDER)/libcore.a  $(LIBFOLDER)/libglad.a -lglfw3 -pthread -lm -lgdi32 -lopengl32
+
+LD_FLAGS :=  $(LIBFOLDER)/libcommon.a  $(LIBFOLDER)/libcore.a  $(LIBFOLDER)/libglad.a -lGL -lglfw3 -pthread -ldl -lGL -lrt -lXrandr -lXi -lXinerama -lX11 -lm
 CC_FLAGS :=  -Wall -O1
 
 SRC_GLAD := $(wildcard src/glad/*.c)
@@ -18,25 +23,25 @@ shader:
 	(cd shader; python3 convert.py)
 
 %.o: %.c
-	gcc $(CC_FLAGS) -c $< -o $@ -Iinclude
+	$(CC) $(CC_FLAGS) -c $< -o $@ -Iinclude
 
 glad: $(OBJ_GLAD)
-	mkdir -p lib
-	ar -crs lib/lib$@.a $^
+	mkdir -p $(LIBFOLDER)
+	ar -crs  $(LIBFOLDER)/lib$@.a $^
 	(cd src/glad; rm *.o)
 
 common: $(OBJ_COMMON)
-	mkdir -p lib
-	ar -crs lib/lib$@.a $^
+	mkdir -p  $(LIBFOLDER)
+	ar -crs  $(LIBFOLDER)/lib$@.a $^
 	(cd src/common; rm *.o)
 
 core: $(OBJ_CORE)
-	mkdir -p lib
-	ar -crs lib/lib$@.a $^
+	mkdir -p  $(LIBFOLDER)
+	ar -crs  $(LIBFOLDER)/lib$@.a $^
 	(cd src/core; rm *.o)
 
 application: $(SRC_APP)
-	gcc -Iinclude $(CC_FLAGS) -o $@ $^ $(LD_FLAGS) 
+	$(CC) -Iinclude $(CC_FLAGS) -o $@ $^ $(LD_FLAGS) 
 
 .PHONY: run
 run:
