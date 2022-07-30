@@ -1,8 +1,6 @@
 ## Nonempty Space
 
 
-![](https://media.discordapp.net/attachments/235123827279921155/1002876737794879518/softrend_gif.gif)
-
 ...is a software rendered 3D demo written in C. Its only goal is to demonstrate my rewritten software renderer. 
 
 
