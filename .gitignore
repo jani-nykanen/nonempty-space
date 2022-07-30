@@ -2,3 +2,5 @@ lib
 *.o
 application
 bin
+libwin32
+*.exe

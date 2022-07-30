@@ -1,7 +1,7 @@
-CC := gcc # i686-w64-mingw32-gcc
+CC := gcc# i686-w64-mingw32-gcc
 LIBFOLDER := lib# libwin32
 
-LD_FLAGS_WIN32 := $(LIBFOLDER)/libcommon.a  $(LIBFOLDER)/libcore.a  $(LIBFOLDER)/libglad.a -lglfw3 -pthread -lm -lgdi32 -lopengl32
+LD_FLAGS_WIN32 := $(LIBFOLDER)/libcommon.a  $(LIBFOLDER)/libcore.a  $(LIBFOLDER)/libglad.a -lglfw3 -pthread -lm -lgdi32 -lopengl32 -Wl,-subsystem,windows
 
 LD_FLAGS :=  $(LIBFOLDER)/libcommon.a  $(LIBFOLDER)/libcore.a  $(LIBFOLDER)/libglad.a -lGL -lglfw3 -pthread -ldl -lGL -lrt -lXrandr -lXi -lXinerama -lX11 -lm
 CC_FLAGS :=  -Wall -O1
