@@ -110,7 +110,8 @@ static void main_loop(_Window* win) {
 }
 
 
-Window* new_window(u16 canvasWidth, u16 canvasHeight, const str caption, Error* err) {
+Window* new_window(u16 canvasWidth, u16 canvasHeight, 
+    const str caption, bool startFullscreen, Error* err) {
 
     i32 winWidth, winHeight;
 
@@ -153,6 +154,11 @@ Window* new_window(u16 canvasWidth, u16 canvasHeight, const str caption, Error* 
     win->oldy = 0;
     win->oldw = 0;
     win->oldh = 0;
+
+    if (startFullscreen) {
+
+        window_toggle_fullscreen((Window*) win);
+    }
 
     return (Window*) win;
 }

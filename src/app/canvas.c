@@ -1,4 +1,5 @@
 #include "canvas.h"
+#include "mathext.h"
 
 #include "common/error.h"
 #include "common/memory.h"
@@ -6,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 
 typedef void (*TextFunction) (Canvas* canvas, Bitmap* bmp, 
@@ -409,10 +411,6 @@ void canvas_draw_text_substring(Canvas* canvas, Bitmap* bmp,
 void canvas_blend_bitmap_region(Canvas* canvas, Bitmap* bmp,
     i32 sx, i32 sy, i32 sw, i32 sh, i32 dx, i32 dy, i32 hue, Flip flip) {
 
-    // TODO: Repeating code, write a general method to use in both
-    // ordinary draw and this blend function, and then pass a callback
-    // function for pixel operation
-
     u32 dest;
     u32 src;
     i32 x, y;
@@ -470,6 +468,51 @@ void canvas_blend_text(Canvas* canvas, Bitmap* bmp,
     draw_text_generic(canvas, bmp, text, 
         0, (u32) strlen(text), x, y, xoff, yoff, align, hue,
         textfunc_blend_bitmap_region_no_flip);
+}
+
+
+void canvas_draw_vertically_waving_bitmap(Canvas* canvas, Bitmap* bmp,
+    i32 dx, i32 dy, f32 wave, f32 amplitude, f32 latitude, f32 period) {
+
+    i32 x, y;
+    i32 sx, sy;
+
+    i32 shifty;
+    i32 sdy;
+
+    i32 dw = (i32) bmp->width;
+    i32 dh = (i32) bmp->height;
+
+    sx = 0;
+    if (dx < 0) {
+
+        sx = -dx;
+    }
+
+    for (x = max_i32(0, dx); x < min_i32(dx + dw, (i32) canvas->width); ++ x, ++ sx) {
+
+        sy = 0;
+
+        shifty = (i32) roundf( sinf((wave + x * period) * latitude ) * amplitude);
+        sdy = dy + shifty;
+        if (sdy < canvas->clipArea.y) {
+
+            sy = -sdy;
+            sdy = canvas->clipArea.y;
+        }
+        if (sdy >= canvas->clipArea.y + canvas->clipArea.h) {
+
+            continue;
+        }
+            
+        for (y = 0; y < dh; ++ y) {
+
+            canvas->pixels[sdy * ((i32) canvas->width) + x] = bmp->pixels[sy * ((i32) bmp->width) + sx];
+
+            ++ sy;
+            ++ sdy;
+        }
+    }
 }
 
 

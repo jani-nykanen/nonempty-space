@@ -37,6 +37,7 @@ typedef struct {
     f32 wind;
     i32 framerate;
     f32 textAlpha;
+    f32 skyWave;
 
 } Application;
 

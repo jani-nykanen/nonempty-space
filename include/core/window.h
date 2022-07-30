@@ -16,7 +16,8 @@ typedef void (*UpdateCallback) (void*, Window*, f32);
 typedef void (*RedrawCallback) (void*, Window*);
 
 
-Window* new_window(u16 canvasWidth, u16 canvasHeight, const str caption, Error* err);
+Window* new_window(u16 canvasWidth, u16 canvasHeight, 
+    const str caption, bool startFullscreen, Error* err);
 void dispose_window(Window* win);
 
 void window_register_callbacks(Window* win,

@@ -76,6 +76,9 @@ void canvas_blend_text(Canvas* canvas, Bitmap* bmp,
     str text, i32 x, i32 y, 
     i32 xoff, i32 yoff, Align align, i32 hue);  
 
+void canvas_draw_vertically_waving_bitmap(Canvas* canvas, Bitmap* bmp,
+    i32 dx, i32 dy, f32 wave, f32 amplitude, f32 latitude, f32 period);
+
 void canvas_draw_line(Canvas* canvas, 
     i32 x1, i32 y1, i32 x2, i32 y2, u8 color);
     

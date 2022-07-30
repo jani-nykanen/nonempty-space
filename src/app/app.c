@@ -31,18 +31,21 @@ static void handle_default_key_shortcuts(Application* app, Window* win) {
 
 static void update_callback(void* pApp, Window* win, f32 timeStep) {
 
+    const f32 MODEL_ROTATION = 0.025f;
     const f32 GROUND_SPEED = 0.005f;
     const f32 WIND_SPEED = 0.05f;
     const f32 TEXT_ALPHA_SPEED = 0.1f;
+    const f32 SKY_WAVE_SPEED = 0.05f;
 
     Application* app = (Application*) pApp;
     handle_default_key_shortcuts(app, win);
 
-    app->modelAngle = fmodf(app->modelAngle - 0.025f * timeStep, M_PI * 2.0f);
+    app->modelAngle = fmodf(app->modelAngle - MODEL_ROTATION * timeStep, M_PI * 2.0f);
     app->groundPos += GROUND_SPEED * timeStep;
 
     app->groundPos = fmodf(app->groundPos, 1.0f);
     app->wind = fmodf(app->wind + WIND_SPEED*timeStep, M_PI*2.0f);
+    app->skyWave = fmodf(app->skyWave + SKY_WAVE_SPEED*timeStep, M_PI*2.0f);
     app->textAlpha = fmodf(app->textAlpha + TEXT_ALPHA_SPEED*timeStep, M_PI*2.0f);
 
     app->framerate = (i32) roundf(60.0f / timeStep);
@@ -161,10 +164,11 @@ static void redraw_callback(void* pApp, Window* win) {
     Canvas* canvas = app->canvas;
     f32 ratio = (f32) canvas->width / (f32) canvas->height;
 
-    canvas_clear(canvas, 83);
+    canvas_clear(canvas, 10);
     canvas_clear_mask(app->maskedCanvas);
     
-    canvas_draw_bitmap_fast(canvas, app->skyBackground, 0, 0);
+    canvas_draw_vertically_waving_bitmap(canvas, app->skyBackground, 0, 0,
+        M_PI*2.0f - app->skyWave, 4.0f, 1.0f,(M_PI*2.0f) / 64.0f);
     draw_forest(app);
 
     tribuf_flush(app->tribuffer);
@@ -199,7 +203,7 @@ Application* new_application(Window* win, Error* err) {
 
     const u16 FOREST_MARGIN = 8;
     const u8 SKY_COLORS[] = {10, 15, 19};
-    const i32 SKY_COLOR_TRANSITION_HEIGHT[] = {8, 12, 16, 20};
+    const i32 SKY_COLOR_TRANSITION_HEIGHT[] = {12, 16, 20, 24};
     const u32 SKY_COLOR_COUNT = 3;
 
     i32 w, h;
@@ -307,6 +311,7 @@ Application* new_application(Window* win, Error* err) {
     app->wind = 0.0f;
     app->framerate = 60;
     app->textAlpha = 0.0f;
+    app->skyWave = 0.0f;
 
     return app;
 }
